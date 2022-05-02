@@ -1,6 +1,9 @@
 "use strict";
-var cwidth = 1000;
-var cheight = 800;
+
+const gpu = new GPU();
+var canvas = document.getElementById("canvas");
+var cwidth = canvas.width = canvas.offsetWidth;
+var cheight = canvas.height = canvas.offsetHeight;
 
 var xmin = -2;
 var xmax = 1;
@@ -13,15 +16,21 @@ var frct = 1;
 
 var d0,d1;
 
+var coul=[];
+
+function calCoul() {
+    coul[0]=0;
+    for (let i=1; i<nmax; i++){
+        coul[i]=Math.floor(128*Math.log10(i));
+    }
+}
+calCoul();
+
 function mandelbrot(){
-    var context,img,r,v,b,a;
+    var context,img,r,v,b,a=255;
+    context = canvas.getContext("2d");
     var xs = (xmax-xmin)/cwidth;
     var ys = (ymax-ymin)/cheight;
-    d0 = new Date();
-    context = document.getElementById("canvas").getContext("2d");
-    document.getElementById("canvas").width = cwidth;
-    document.getElementById("canvas").height = cheight;
-    document.getElementById("param").style.left = cwidth+"px";
     img = context.createImageData(cwidth,cheight);
     for (var y=0,j=0;y<cheight;y++){
         var cy = ymax - y*ys;
@@ -30,22 +39,18 @@ function mandelbrot(){
             var x1 = cx;
             var y1 = cy;
             for(var i=0;i<nmax;i++){
-                var xx = x1*x1;
-                var yy = y1*y1;
+                var xx = x1**2;
+                var yy = y1**2;
                 if (xx+yy>l){break;}
                 y1 = 2*x1*y1+cy;
                 x1 = xx-yy+cx;
             }
             if (i === nmax){
-                r=0;
-                v=0;
-                b=0;
-                a=255;
+                r=v=b=0;
             } else {
-                r=Math.floor(128*Math.log(i)/Math.log(10));
+                r=coul[i];
                 v=i*2;
                 b=i;
-                a=255;
             }
             img.data[j++] = r;
             img.data[j++] = v;
@@ -54,18 +59,12 @@ function mandelbrot(){
         }
     }
     context.putImageData(img, 0, 0);
-    d1 = new Date();
-    var d = (d1-d0)/1000;
-    document.getElementById("disp").innerHTML = "temps de calcul : "+d.toString()+"sec";
-    document.getElementById("calc").style.display = "none";
 }
 function julia(n){
-    var context,img,r,v,b,a;
-    d0 = new Date();
-    context = document.getElementById("canvas").getContext("2d");
-    document.getElementById("canvas").width = cwidth;
-    document.getElementById("canvas").height = cheight;
-    document.getElementById("param").style.left = cwidth+"px";
+    var context,img,r,v,b,a=255;
+    context = canvas.getContext("2d");
+    // document.canvas.width = cwidth;
+    // document.canvas.height = cheight;
     img = context.createImageData(cwidth,cheight);
     var xs = (xmax-xmin)/cwidth;
     var ys = (ymax-ymin)/cheight;
@@ -97,12 +96,10 @@ function julia(n){
                 r=0;
                 v=0;
                 b=0;
-                a=255;
             } else {
                 r=Math.floor(128*Math.log(i)/Math.log(10));
                 v=i*2;
                 b=i;
-                a=255;
             }
             img.data[j++] = r;
             img.data[j++] = v;
@@ -111,10 +108,6 @@ function julia(n){
         }
     }
     context.putImageData(img, 0, 0);
-    d1 = new Date();
-    var d = (d1-d0)/1000;
-    document.getElementById("disp").innerHTML = "temps de calcul : "+d.toString()+"sec";
-    document.getElementById("calc").style.display = "none";
 }
 
 var cosa = Math.cos(Math.PI/3);
@@ -129,6 +122,7 @@ function koch(x1,y1,x2,y2,i,ctx){
         var yb = (-y2+ymax)*ys;
         ctx.lineJoin = "bevel";
         ctx.lineWidth = 1;
+        // ctx.strokeStyle = '#fff'
         ctx.beginPath();
         ctx.moveTo(xa,ya);
         ctx.lineTo(xb,yb);
@@ -147,6 +141,15 @@ function koch(x1,y1,x2,y2,i,ctx){
         koch(xb,yb,xc,yc,i,ctx);
         koch(xc,yc,x2,y2,i,ctx);
     }
+}
+
+function vankoch(){
+    context = canvas.getContext("2d");
+    if (nmax>9) {nmax = 9;document.getElementById("formiter").value=nmax;}
+    context.strokeStyle = "#fff";
+    koch(-1,1,1,1,0,context);
+    koch(1,1,0,-0.732,0,context);
+    koch(0,-0.732,-1,1,0,context);
 }
 
 function koch2(x1,y1,x2,y2,i,ctx){
@@ -193,39 +196,14 @@ function koch2(x1,y1,x2,y2,i,ctx){
     }
 }
 
-function vankoch(){
-    d0 = new Date();
-    context = document.getElementById("canvas").getContext("2d");
-    document.getElementById("canvas").width = cwidth;
-    document.getElementById("canvas").height = cheight;
-    document.getElementById("param").style.left = cwidth+"px";
-    if (nmax>9) {nmax = 9;document.getElementById("formiter").value=nmax;}
-    context.strokeStyle = "black";
-    koch(-1,1,1,1,0,context);
-    koch(1,1,0,-0.732,0,context);
-    koch(0,-0.732,-1,1,0,context);
-    d1 = new Date();
-    var d = (d1-d0)/1000;
-    document.getElementById("disp").innerHTML = "temps de calcul : "+d.toString()+"sec";
-    document.getElementById("calc").style.display = "none";
-}
-
 function vankoch2(){
-    d0 = new Date();
-    context = document.getElementById("canvas").getContext("2d");
-    document.getElementById("canvas").width = cwidth;
-    document.getElementById("canvas").height = cheight;
-    document.getElementById("param").style.left = cwidth+"px";
+    context = canvas.getContext("2d");
     if (nmax>5) {nmax = 5;document.getElementById("formiter").value=nmax;}
-    context.strokeStyle = "black";
+    context.strokeStyle = "#fff";
     koch2(-1,1,1,1,0,context);
     koch2(1,1,1,-1,0,context);
     koch2(1,-1,-1,-1,0,context);
     koch2(-1,-1,-1,1,0,context);
-    d1 = new Date();
-    var d = (d1-d0)/1000;
-    document.getElementById("disp").innerHTML = "temps de calcul : "+d.toString()+"sec";
-    document.getElementById("calc").style.display = "none";
 }
 
 function sierp(x1,y1,x2,y2,x3,y3,i,ctx){
@@ -259,18 +237,10 @@ function sierp(x1,y1,x2,y2,x3,y3,i,ctx){
 }
 
 function sierpinski(){
-    d0 = new Date();
-    context = document.getElementById("canvas").getContext("2d");
-    document.getElementById("canvas").width = cwidth;
-    document.getElementById("canvas").height = cheight;
-    document.getElementById("param").style.left = cwidth+"px";
+    context = canvas.getContext("2d");
     if (nmax>12) {nmax = 12;document.getElementById("formiter").value=nmax;}
-    context.strokeStyle = "black";
+    context.fillStyle = "#eee";
     sierp(-1,-0.732,0,1,1,-0.732,0,context);
-    d1 = new Date();
-    var d = (d1-d0)/1000;
-    document.getElementById("disp").innerHTML = "temps de calcul : "+d.toString()+"sec";
-    document.getElementById("calc").style.display = "none";
 }
 
 function dragon(x1,y1,x2,y2,i,ctx){
@@ -300,12 +270,7 @@ function dragon(x1,y1,x2,y2,i,ctx){
     }
 }
 function heightway(){
-    d0 = new Date();
-    context = document.getElementById("canvas").getContext("2d");
-    document.getElementById("canvas").width = cwidth;
-    document.getElementById("canvas").height = cheight;
-    document.getElementById("param").style.left = cwidth+"px";
-    
+    context = canvas.getContext("2d");
     if (nmax>18) {nmax = 18;document.getElementById("formiter").value=nmax;}
     context.strokeStyle = "red";
     dragon(-1,0,1,0,0,context);
@@ -315,19 +280,18 @@ function heightway(){
     dragon(1,0,3,0,0,context);
     context.strokeStyle = "purple";
     dragon(3,0,1,0,0,context);
-    
-    d1 = new Date();
-    var d = (d1-d0)/1000;
-    document.getElementById("disp").innerHTML = "temps de calcul : "+d.toString()+"sec";
-    document.getElementById("calc").style.display = "none";
 }
 
 function draw(){
-    setTimeout("fractale()", 10);
+    cwidth = canvas.width = canvas.offsetWidth;
+    cheight = canvas.height = canvas.offsetHeight;
+    // setTimeout("fractale()", 10);
+    fractale();
 }
 
 function fractale(){
     document.getElementById("calc").style.display = "block";
+    d0 = performance.now();
     switch(frct){
         case 1:
         default:
@@ -355,6 +319,10 @@ function fractale(){
             heightway();
             break;
     }
+    d1 = performance.now();
+    let d = (d1-d0)/1000; // durée d'execution en secondes
+    document.getElementById("disp").innerHTML = "temps de calcul :<br>"+d.toFixed(5)+" sec";
+    document.getElementById("calc").style.display = "none";
 }
 
 function reinit(){
@@ -381,8 +349,8 @@ var m_y = "0";
 var m_x0 = "0";
 var m_y0 = "0";
 function mousse_position (e) {
-    m_x = (navigator.appName.substring(0,3) == "Net") ? e.pageX : event.clientX+document.body.scrollLeft;
-    m_y = (navigator.appName.substring(0,3) == "Net") ? e.pageY : event.clientY+document.body.scrollTop;
+    m_x = e.pageX;
+    m_y = e.pageY;
 }
 
 function handle(delta) {
@@ -467,11 +435,12 @@ function end(event){
     draw();
 }
 
-window.document.onmousemove = mousse_position;
+window.onresize = ratio;
+window.onmousemove = mousse_position;
 if (window.addEventListener)
     document.getElementById("canvas").addEventListener('DOMMouseScroll', wheel, false);
 document.getElementById("canvas").onmousewheel = wheel;
 document.getElementById("canvas").onmousedown = begin;
 document.getElementById("canvas").onmousemove = move;
 document.getElementById("canvas").onmouseup = end;
-draw();
+ratio();
