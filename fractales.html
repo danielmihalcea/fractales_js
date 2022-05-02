@@ -6,16 +6,15 @@
 <link rel="stylesheet" href="fractales.css">
 </head>
 <body>
-
-<canvas id="canvas" width="1000" height="800"></canvas>
+<canvas id="canvas"></canvas>
 <form id="param">
-<label for="formiter">Itérations</label><input id="formiter" type="text" value="100" onchange="nmax=parseInt(this.value);"><br>
-Le nombre d'itérations est volontairement bridé pour certaines fractales (Koch1 : 9, Koch2 : 5, Sierpiński : 12, Heighway : 18).
+<label for="formiter">Itérations</label><input id="formiter" type="text" value="100" onchange="nmax=parseInt(this.value);calCoul();"><br>
+(limité pour certaines fractales :<br>Koch1 : 9, Koch2 : 5, Sierpiński : 12, Heighway : 18).
 <hr>
 fenêtre<br>
 <label for="formxmin">xmin</label><input id="formxmin" type="text" value="-2" onchange="xmin=parseInt(this.value);"><br>
 <label for="formxmax">xmax</label><input id="formxmax" type="text" value="1" onchange="xmax=parseInt(this.value);"><br>
-<label for="formymin">ymin</label><input id="formymin" type="text" value="-1.2" onchange="ymin=parseInt(this.value);"><b>
+<label for="formymin">ymin</label><input id="formymin" type="text" value="-1.2" onchange="ymin=parseInt(this.value);"><br>
 <label for="formymax">ymax</label><input id="formymax" type="text" value="1.2" onchange="ymax=parseInt(this.value);">
 <hr>
 <input type="button" value="Reinitialiser" onclick="reinit();"> <input type="button" value="1:1" onclick="ratio();">
@@ -38,8 +37,6 @@ Choix de la fractale<br>
 <span id="disp"></span>
 </form>
 <div id="calc"><div id="calc2">calcul en cours...</div></div>
-
-<script src="gpu-browser.min.js"></script>
-<script src="fractales.js"></script>
+<script src="gpu-browser.min.js"></script><script src="fractales.js"></script>
 </body>
 </html>
