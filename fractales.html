@@ -8,6 +8,17 @@
 <body>
 <canvas id="canvas"></canvas>
 <form id="param">
+Choix de la fractale<br>
+<label for="formmand">Mandelbrot</label><input id="formmand" type="radio" name="fract" onchange="frct=1;" checked><br>
+<label for="formmandg">Mandelbrot(GPU)</label><input id="formmandg" type="radio" name="fract" onchange="frct=11;"><br>
+<label for="formjul1">Julia 1</label><input id="formjul1" type="radio" name="fract" onchange="frct=2;"><br>
+<label for="formjul2">Julia 2</label><input id="formjul2" type="radio" name="fract" onchange="frct=3;"><br>
+<label for="formjul3">Julia 3</label><input id="formjul3" type="radio" name="fract" onchange="frct=4;"><br>
+<label for="formkoc1">Koch 1</label><input id="formkoc1" type="radio" name="fract" onchange="frct=5;"><br>
+<label for="formkoc2">Koch 2</label><input id="formkoc2" type="radio" name="fract" onchange="frct=6;"><br>
+<label for="formsier">Sierpiński</label><input id="formsier" type="radio" name="fract" onchange="frct=7;"><br>
+<label for="formdrag">Heighway</label><input id="formdrag" type="radio" name="fract" onchange="frct=8;">
+<hr>
 <label for="formiter">Itérations</label><input id="formiter" type="text" value="100" onchange="nmax=parseInt(this.value);calCoul();"><br>
 (limité pour certaines fractales :<br>Koch1 : 9, Koch2 : 5, Sierpiński : 12, Heighway : 18).
 <hr>
@@ -19,24 +30,9 @@ fenêtre<br>
 <hr>
 <input type="button" value="Reinitialiser" onclick="reinit();"> <input type="button" value="1:1" onclick="ratio();">
 <hr>
-Canevas<br>
-<label for="formlarg">largeur</label><input id="formlarg" type="text" value="1000" onchange="cwidth=parseInt(this.value);"><br>
-<label for="formhaut">hauteur</label><input id="formhaut" type="text" value="800" onchange="cheight=parseInt(this.value);">
-<hr>
-Choix de la fractale<br>
-<label for="formmand">Mandelbrot</label><input id="formmand" type="radio" name="fract" onchange="frct=1;" checked><br>
-<label for="formjul1">Julia 1</label><input id="formjul1" type="radio" name="fract" onchange="frct=2;"><br>
-<label for="formjul2">Julia 2</label><input id="formjul2" type="radio" name="fract" onchange="frct=3;"><br>
-<label for="formjul3">Julia 3</label><input id="formjul3" type="radio" name="fract" onchange="frct=4;"><br>
-<label for="formkoc1">Koch 1</label><input id="formkoc1" type="radio" name="fract" onchange="frct=5;"><br>
-<label for="formkoc2">Koch 2</label><input id="formkoc2" type="radio" name="fract" onchange="frct=6;"><br>
-<label for="formsier">Sierpiński</label><input id="formsier" type="radio" name="fract" onchange="frct=7;"><br>
-<label for="formdrag">Heighway</label><input id="formdrag" type="radio" name="fract" onchange="frct=8;">
-<hr>
 <input type="button" value="Rendu" onclick="draw();"><br>
 <span id="disp"></span>
 </form>
-<div id="calc"><div id="calc2">calcul en cours...</div></div>
 <script src="gpu-browser.min.js"></script><script src="fractales.js"></script>
 </body>
 </html>

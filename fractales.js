@@ -1,6 +1,5 @@
 "use strict";
 
-const gpu = new GPU();
 var canvas = document.getElementById("canvas");
 var cwidth = canvas.width = canvas.offsetWidth;
 var cheight = canvas.height = canvas.offsetHeight;
@@ -25,6 +24,45 @@ function calCoul() {
     }
 }
 calCoul();
+
+function coord(x, w, c) { // x[x, y], w[xmin, xmax, ymin, ymax], c[cwidth, cheight]
+    let xs = (w[1]-w[0])/c[0];
+    let ys = (w[3]-w[2])/c[1];
+    return [w[0]+x[0]*xs, w[2]+x[1]*ys];
+}
+
+const gpu = new GPU();
+gpu.addFunction(coord);
+var mandelbrotGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,cheight) {
+    let x = [0,0];
+    x = coord([this.thread.x, this.thread.y], [xmin, xmax, ymin, ymax], [cwidth, cheight]);
+    let cx = x[0];
+    let cy = x[1];
+    let x1 = cx;
+    let y1 = cy;
+    let out = false;
+    let i = 0;
+    for(;i<nmax;i++){
+                let xx = x1**2;
+                let yy = y1**2;
+                if (xx+yy>4){out=true;break;}
+                y1 = 2*x1*y1+cy;
+                x1 = xx-yy+cx;
+            }
+    if (out){
+        this.color(Math.log10(i)/2, i*2/256, i/256);
+    } else {
+        this.color(0, 0, 0);
+    }
+})
+  .setLoopMaxIterations(10000)
+  .setOutput([cwidth, cheight])
+  .setGraphical(true);
+
+function mandelGPU() {
+mandelbrotGPU(xmin,xmax,ymin,ymax,nmax,cwidth,cheight);
+document.getElementById('canvas').getContext('2d').drawImage(gpu.canvas, 0, 0);
+}
 
 function mandelbrot(){
     var context,img,r,v,b,a=255;
@@ -285,17 +323,23 @@ function heightway(){
 function draw(){
     cwidth = canvas.width = canvas.offsetWidth;
     cheight = canvas.height = canvas.offsetHeight;
-    // setTimeout("fractale()", 10);
+    d0 = performance.now();
+    // document.getElementById("calc").style.display = "block";
     fractale();
+    // document.getElementById("calc").style.display = "none";
+    d1 = performance.now();
+    let d = (d1-d0)/1000; // durée d'execution en secondes
+    document.getElementById("disp").innerHTML = "temps de calcul :<br>"+d.toFixed(5)+" sec";
 }
 
 function fractale(){
-    document.getElementById("calc").style.display = "block";
-    d0 = performance.now();
     switch(frct){
         case 1:
         default:
             mandelbrot();
+            break;
+        case 11:
+            mandelGPU();
             break;
         case 2:
             julia(1);
@@ -319,15 +363,11 @@ function fractale(){
             heightway();
             break;
     }
-    d1 = performance.now();
-    let d = (d1-d0)/1000; // durée d'execution en secondes
-    document.getElementById("disp").innerHTML = "temps de calcul :<br>"+d.toFixed(5)+" sec";
-    document.getElementById("calc").style.display = "none";
 }
 
 function reinit(){
-    cwidth = 1000;document.getElementById("formlarg").value=cwidth;
-    cheight = 800;document.getElementById("formhaut").value=cheight;
+    // cwidth = 1000;document.getElementById("formlarg").value=cwidth;
+    // cheight = 800;document.getElementById("formhaut").value=cheight;
     xmin = -2;document.getElementById("formxmin").value=xmin;
     xmax = 1;document.getElementById("formxmax").value=xmax;
     ymin = -1.2;document.getElementById("formymin").value=ymin;
@@ -339,18 +379,10 @@ function ratio(){
     var dx = xmax-xmin;
     var dy = dx*cheight/cwidth;
     var y0 = (ymin+ymax)/2;
+    // console.log(dy);
     ymin = y0-(dy/2);document.getElementById("formymin").value=ymin;
     ymax = y0+(dy/2);document.getElementById("formymax").value=ymax;
     draw();
-}
-
-var m_x = "0";
-var m_y = "0";
-var m_x0 = "0";
-var m_y0 = "0";
-function mousse_position (e) {
-    m_x = e.pageX;
-    m_y = e.pageY;
 }
 
 function handle(delta) {
@@ -382,16 +414,16 @@ function wheel(event){
     if (!event)
             event = window.event;
     if (event.wheelDelta){
-            delta = event.wheelDelta/120;
+        delta = event.wheelDelta/120;
             if (window.opera)
                     delta = -delta;
     } else if (event.detail) {
-            delta = -event.detail/3;
+        delta = -event.detail/3;
     }
     if (delta)
-            handle(delta);
+    handle(delta);
     if (event.preventDefault)
-            event.preventDefault();
+    event.preventDefault();
     event.returnValue = false;
 }
 
@@ -401,10 +433,20 @@ var mov=false;
 function begin(event){
     m_x0 = m_x;
     m_y0 = m_y;
-    context = document.getElementById("canvas").getContext("2d");
+    context = canvas.getContext("2d");
     img = context.getImageData(0, 0, cwidth, cheight);
     mov=true;
 }
+
+var m_x = 0;
+var m_y = 0;
+var m_x0 = 0;
+var m_y0 = 0;
+function mouse_position (e) {
+    m_x = e.pageX;
+    m_y = e.pageY;
+}
+
 function move(event){
     if (!mov) return;
     var xs=(xmax-xmin)/cwidth;
@@ -436,11 +478,12 @@ function end(event){
 }
 
 window.onresize = ratio;
-window.onmousemove = mousse_position;
+// canvas.onresize = ratio;
+window.onmousemove = mouse_position;
 if (window.addEventListener)
-    document.getElementById("canvas").addEventListener('DOMMouseScroll', wheel, false);
-document.getElementById("canvas").onmousewheel = wheel;
-document.getElementById("canvas").onmousedown = begin;
-document.getElementById("canvas").onmousemove = move;
-document.getElementById("canvas").onmouseup = end;
+    canvas.addEventListener('DOMMouseScroll', wheel, false);
+canvas.onmousewheel = wheel;
+canvas.onmousedown = begin;
+canvas.onmousemove = move;
+canvas.onmouseup = end;
 ratio();

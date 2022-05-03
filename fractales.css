@@ -5,5 +5,3 @@ label{display:block;float:left;margin-right:16px;text-align:right;width:100px;}
 input{width:100px;}
 #canvas{background:#000;height:100%;width:100%;position:absolute;}
 #param{position:absolute;top:0px;right:0px;width:230px;padding:10px;/*text-align:justify*/;background: #fff;}
-#calc{position:fixed;top:0px;left:0px;width:100%;height:100%;background:rgba(255,255,255,0.5);/*udisplay:none;*/}
-#calc2{position:absolute;width:200px;height:20px;left:50%;margin-left:-100px;top:50%;margin-top:-10px;}
