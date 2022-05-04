@@ -9,7 +9,7 @@ var xmax = 1;
 var ymin = -1.2;
 var ymax = 1.2;
 
-var nmax = 100;
+var nmax = 1000;
 var l = 4;
 var frct = 1;
 
@@ -55,6 +55,8 @@ var mandelbrotGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,ch
         this.color(0, 0, 0);
     }
 })
+//   .setPrecision('single')
+//   .setTactic('precision')
   .setLoopMaxIterations(10000)
   .setOutput([cwidth, cheight])
   .setGraphical(true);
@@ -455,6 +457,7 @@ function move(event){
     var my=m_y-m_y0;
     var cx=- mx*xs;
     var cy=my*ys;
+    document.getElementById("param").style.backgroundColor = 'rgb('+mx+','+my+',1130)';
     document.getElementById("formxmin").value=xmin+cx;
     document.getElementById("formxmax").value=xmax+cx;
     document.getElementById("formymin").value=ymin+cy;
@@ -481,9 +484,16 @@ window.onresize = ratio;
 // canvas.onresize = ratio;
 window.onmousemove = mouse_position;
 if (window.addEventListener)
-    canvas.addEventListener('DOMMouseScroll', wheel, false);
+    canvas.addEventListener('DOMMouseScroll', wheel);
 canvas.onmousewheel = wheel;
 canvas.onmousedown = begin;
 canvas.onmousemove = move;
 canvas.onmouseup = end;
+
+canvas.addEventListener('touchstart', begin);
+canvas.addEventListener('touchmove', move);
+canvas.addEventListener('touchmove', mouse_position);
+canvas.addEventListener('touchend', end);
+
+
 ratio();
