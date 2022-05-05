@@ -9,18 +9,18 @@
 <canvas id="canvas"></canvas>
 <form id="param">
 Choix de la fractale<br>
-<label for="formmand">Mandelbrot</label><input id="formmand" type="radio" name="fract" onchange="frct=1;" checked><br>
-<label for="formmandg">Mandelbrot(GPU)</label><input id="formmandg" type="radio" name="fract" onchange="frct=11;"><br>
-<label for="formjul1">Julia 1</label><input id="formjul1" type="radio" name="fract" onchange="frct=2;"><br>
-<label for="formjul2">Julia 2</label><input id="formjul2" type="radio" name="fract" onchange="frct=3;"><br>
-<label for="formjul3">Julia 3</label><input id="formjul3" type="radio" name="fract" onchange="frct=4;"><br>
-<label for="formkoc1">Koch 1</label><input id="formkoc1" type="radio" name="fract" onchange="frct=5;"><br>
-<label for="formkoc2">Koch 2</label><input id="formkoc2" type="radio" name="fract" onchange="frct=6;"><br>
-<label for="formsier">Sierpiński</label><input id="formsier" type="radio" name="fract" onchange="frct=7;"><br>
-<label for="formdrag">Heighway</label><input id="formdrag" type="radio" name="fract" onchange="frct=8;">
+<label for="formmand">Mandelbrot</label><input id="formmand" type="radio" name="fract" onchange="selectFract(1);" checked><br>
+<label for="formmandg">Mandelbrot(GPU)</label><input id="formmandg" type="radio" name="fract" onchange="selectFract(11);"><br>
+<label for="formjul1">Julia 1</label><input id="formjul1" type="radio" name="fract" onchange="selectFract(2);"><br>
+<label for="formjul2">Julia 2</label><input id="formjul2" type="radio" name="fract" onchange="selectFract(3);"><br>
+<label for="formjul3">Julia 3</label><input id="formjul3" type="radio" name="fract" onchange="selectFract(4);"><br>
+<label for="formkoc1">Koch 1</label><input id="formkoc1" type="radio" name="fract" onchange="selectFract(5);"><br>
+<label for="formkoc2">Koch 2</label><input id="formkoc2" type="radio" name="fract" onchange="selectFract(6);"><br>
+<label for="formsier">Sierpiński</label><input id="formsier" type="radio" name="fract" onchange="selectFract(7);"><br>
+<label for="formdrag">Heighway</label><input id="formdrag" type="radio" name="fract" onchange="selectFract(8);">
 <hr>
-<label for="formiter">Itérations</label><input id="formiter" type="text" value="100" onchange="nmax=parseInt(this.value);calCoul();"><br>
-(limité pour certaines fractales :<br>Koch1 : 9, Koch2 : 5, Sierpiński : 12, Heighway : 18).
+<label for="formiter" title="limite, Koch1 : 9, Koch2 : 5, Sierpiński : 12, Heighway : 18">Itérations</label><input id="formiter" type="range" min="100" step="100" max="10000" value="1000" oninput="document.getElementById('formiter2').value=document.getElementById('formiter').value;nmax=parseInt(this.value);calCoul();"><br>
+<label for="formiter2">&nbsp;</label><output id="formiter2" value="1000">1000</output>
 <hr>
 fenêtre<br>
 <label for="formxmin">xmin</label><input id="formxmin" type="text" value="-2" onchange="xmin=parseInt(this.value);"><br>
