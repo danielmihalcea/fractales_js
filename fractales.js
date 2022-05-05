@@ -100,11 +100,10 @@ function mandelbrot(){
     }
     context.putImageData(img, 0, 0);
 }
+
 function julia(n){
     var context,img,r,v,b,a=255;
     context = canvas.getContext("2d");
-    // document.canvas.width = cwidth;
-    // document.canvas.height = cheight;
     img = context.createImageData(cwidth,cheight);
     var xs = (xmax-xmin)/cwidth;
     var ys = (ymax-ymin)/cheight;
@@ -162,7 +161,6 @@ function koch(x1,y1,x2,y2,i,ctx){
         var yb = (-y2+ymax)*ys;
         ctx.lineJoin = "bevel";
         ctx.lineWidth = 1;
-        // ctx.strokeStyle = '#fff'
         ctx.beginPath();
         ctx.moveTo(xa,ya);
         ctx.lineTo(xb,yb);
@@ -326,14 +324,60 @@ function draw(){
     cwidth = canvas.width = canvas.offsetWidth;
     cheight = canvas.height = canvas.offsetHeight;
     d0 = performance.now();
-    // document.getElementById("calc").style.display = "block";
     fractale();
-    // document.getElementById("calc").style.display = "none";
     d1 = performance.now();
     let d = (d1-d0)/1000; // durée d'execution en secondes
     document.getElementById("disp").innerHTML = "temps de calcul :<br>"+d.toFixed(5)+" sec";
 }
 
+function selectFract(f) {
+    frct = f;
+    let iter = document.getElementById("formiter");
+    switch(frct){
+        case 1: // mandelbrot
+        default:
+        case 2: // julia 1
+        case 3: // julia 2
+        case 4: // julia 3
+            iter.min = 100;
+            iter.max = 10000;
+            iter.step = 100;
+            iter.value = 1000;
+            break;
+        case 11: // mandelbrot gpu
+            iter.min = 1000;
+            iter.max = 10000;
+            iter.step = 1000;
+            iter.value = 10000;
+            break;
+        case 5: // Koch 1
+            iter.min = 0;
+            iter.max = 9;
+            iter.step = 1;
+            iter.value = 4;
+            break;
+        case 6: // koch 2
+            iter.min = 0;
+            iter.max = 5;
+            iter.step = 1;
+            iter.value = 3;
+            break;
+        case 7: // sierpinski
+            iter.min = 0;
+            iter.max = 12;
+            iter.step = 1;
+            iter.value = 5;
+            break;
+        case 8: // heighway
+            iter.min = 0;
+            iter.max = 18;
+            iter.step = 1;
+            iter.value = 15;
+            break;
+    }
+    nmax = parseInt(iter.value);
+    document.getElementById("formiter2").value = iter.value;
+}
 function fractale(){
     switch(frct){
         case 1:
@@ -368,20 +412,17 @@ function fractale(){
 }
 
 function reinit(){
-    // cwidth = 1000;document.getElementById("formlarg").value=cwidth;
-    // cheight = 800;document.getElementById("formhaut").value=cheight;
     xmin = -2;document.getElementById("formxmin").value=xmin;
     xmax = 1;document.getElementById("formxmax").value=xmax;
     ymin = -1.2;document.getElementById("formymin").value=ymin;
     ymax = 1.2;document.getElementById("formymax").value=ymax;
-    nmax = 100;document.getElementById("formiter").value=nmax;
+    nmax = 1000;document.getElementById("formiter").value=nmax;
     draw();
 }
 function ratio(){
     var dx = xmax-xmin;
     var dy = dx*cheight/cwidth;
     var y0 = (ymin+ymax)/2;
-    // console.log(dy);
     ymin = y0-(dy/2);document.getElementById("formymin").value=ymin;
     ymax = y0+(dy/2);document.getElementById("formymax").value=ymax;
     draw();
@@ -397,7 +438,7 @@ function handle(delta) {
     var cx = xmin + x*xs;
     var cy = ymax - y*ys;
     
-    if (delta < 0){
+    if (delta > 0){
         dx*=2;
         dy*=2;
     }else{
@@ -411,53 +452,44 @@ function handle(delta) {
     draw();
 }
 
-function wheel(event){
-    var delta = 0;
-    if (!event)
-            event = window.event;
-    if (event.wheelDelta){
-        delta = event.wheelDelta/120;
-            if (window.opera)
-                    delta = -delta;
-    } else if (event.detail) {
-        delta = -event.detail/3;
+function wheel(e){
+    e.preventDefault();
+    if (e.deltaY != 0) {
+        m_x = e.pageX || e.targetTouches[0].pageX;
+        m_y = e.pageY || e.targetTouches[0].pageY;    
+        handle(e.deltaY);
     }
-    if (delta)
-    handle(delta);
-    if (event.preventDefault)
-    event.preventDefault();
-    event.returnValue = false;
+    return;
 }
 
 var context;
 var img;
 var mov=false;
-function begin(event){
-    m_x0 = m_x;
-    m_y0 = m_y;
-    context = canvas.getContext("2d");
-    img = context.getImageData(0, 0, cwidth, cheight);
-    mov=true;
-}
 
 var m_x = 0;
 var m_y = 0;
 var m_x0 = 0;
 var m_y0 = 0;
-function mouse_position (e) {
-    m_x = e.pageX;
-    m_y = e.pageY;
+
+function begin(e){
+    m_x0 = e.pageX || e.targetTouches[0].pageX;
+    m_y0 = e.pageY || e.targetTouches[0].pageY;
+    context = canvas.getContext("2d");
+    img = context.getImageData(0, 0, cwidth, cheight);
+    mov=true;
 }
 
-function move(event){
+function move(e){
+    e.preventDefault();
     if (!mov) return;
     var xs=(xmax-xmin)/cwidth;
     var ys=(ymax-ymin)/cheight;
+    m_x = e.pageX || e.targetTouches[0].pageX;
+    m_y = e.pageY || e.targetTouches[0].pageY;
     var mx=m_x-m_x0;
     var my=m_y-m_y0;
     var cx=- mx*xs;
     var cy=my*ys;
-    document.getElementById("param").style.backgroundColor = 'rgb('+mx+','+my+',1130)';
     document.getElementById("formxmin").value=xmin+cx;
     document.getElementById("formxmax").value=xmax+cx;
     document.getElementById("formymin").value=ymin+cy;
@@ -482,18 +514,14 @@ function end(event){
 
 window.onresize = ratio;
 // canvas.onresize = ratio;
-window.onmousemove = mouse_position;
-if (window.addEventListener)
-    canvas.addEventListener('DOMMouseScroll', wheel);
-canvas.onmousewheel = wheel;
-canvas.onmousedown = begin;
-canvas.onmousemove = move;
-canvas.onmouseup = end;
+canvas.addEventListener('wheel', wheel);
+
+canvas.addEventListener('mousedown', begin);
+canvas.addEventListener('mousemove', move);
+canvas.addEventListener('mouseup', end);
 
 canvas.addEventListener('touchstart', begin);
 canvas.addEventListener('touchmove', move);
-canvas.addEventListener('touchmove', mouse_position);
 canvas.addEventListener('touchend', end);
-
 
 ratio();
