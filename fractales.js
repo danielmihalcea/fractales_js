@@ -11,7 +11,7 @@ var ymax = 1.2;
 
 var nmax = 1000;
 var l = 4;
-var frct = 1;
+var frct = 11;
 
 var d0,d1;
 
@@ -323,7 +323,13 @@ function heightway(){
 function draw(){
     cwidth = canvas.width = canvas.offsetWidth;
     cheight = canvas.height = canvas.offsetHeight;
+    let ctx = canvas.getContext("2d");
+    // ctx.textAlign = "center";ctx.font = '48px sans-serif';ctx.color = "#000";ctx.strokeStyle="#fff";
+    // ctx.fillText('Hello world', 200, 200);
+    // ctx.strokeText('Hello world', 200, 200);
+    // window.requestAnimationFrame(function(){let ctx = canvas.getContext("2d");ctx.fillText('Hello world', 200, 200);ctx.strokeText('Hello world', 200, 200);})
     d0 = performance.now();
+    window.requestAnimationFrame(fractale)
     fractale();
     d1 = performance.now();
     let d = (d1-d0)/1000; // durée d'execution en secondes
@@ -331,7 +337,7 @@ function draw(){
 }
 
 function selectFract(f) {
-    frct = f;
+    frct = parseInt(f);
     let iter = document.getElementById("formiter");
     switch(frct){
         case 1: // mandelbrot
@@ -348,7 +354,7 @@ function selectFract(f) {
             iter.min = 1000;
             iter.max = 10000;
             iter.step = 1000;
-            iter.value = 10000;
+            iter.value = 1000;
             break;
         case 5: // Koch 1
             iter.min = 0;
@@ -377,6 +383,7 @@ function selectFract(f) {
     }
     nmax = parseInt(iter.value);
     document.getElementById("formiter2").value = iter.value;
+    draw();
 }
 function fractale(){
     switch(frct){
@@ -429,6 +436,14 @@ function ratio(){
 }
 
 function handle(delta) {
+    if (delta > 0){
+        setZoom(.5);
+    }else{
+        setZoom(2);
+    }
+    draw();
+}
+function setZoom(f) {
     var dx = xmax-xmin;
     var dy = ymax-ymin;
     var xs = (xmax-xmin)/cwidth;
@@ -437,19 +452,12 @@ function handle(delta) {
     var y = parseInt(m_y);
     var cx = xmin + x*xs;
     var cy = ymax - y*ys;
-    
-    if (delta > 0){
-        dx*=2;
-        dy*=2;
-    }else{
-        dx/=2;
-        dy/=2;
-    }
+    dx/=f;
+    dy/=f;
     xmin = cx - dx/2;document.getElementById("formxmin").value=xmin;
     xmax = cx + dx/2;document.getElementById("formxmax").value=xmax;
     ymin = cy - dy/2;document.getElementById("formymin").value=ymin;
     ymax = cy + dy/2;document.getElementById("formymax").value=ymax;
-    draw();
 }
 
 function wheel(e){
@@ -471,12 +479,21 @@ var m_y = 0;
 var m_x0 = 0;
 var m_y0 = 0;
 
+var deltaZoom0 = 0; // distance des 2 doigts en pixels
+var deltaZoom1 = 1; // % de rapprochement des doigts
+function deltaZoom(e) {
+    return Math.hypot(e.targetTouches[1].pageX-e.targetTouches[0].pageX, e.targetTouches[1].pageY-e.targetTouches[0].pageY)
+}
 function begin(e){
     m_x0 = e.pageX || e.targetTouches[0].pageX;
     m_y0 = e.pageY || e.targetTouches[0].pageY;
     context = canvas.getContext("2d");
     img = context.getImageData(0, 0, cwidth, cheight);
     mov=true;
+    if (e.targetTouches && e.targetTouches.length === 2) {
+        deltaZoom0 = deltaZoom(e);
+        deltaZoom1 = 1;
+    }
 }
 
 function move(e){
@@ -490,12 +507,18 @@ function move(e){
     var my=m_y-m_y0;
     var cx=- mx*xs;
     var cy=my*ys;
+    if (e.targetTouches && e.targetTouches.length === 2) {
+        deltaZoom1 = deltaZoom(e)/deltaZoom0;
+    }
     document.getElementById("formxmin").value=xmin+cx;
     document.getElementById("formxmax").value=xmax+cx;
     document.getElementById("formymin").value=ymin+cy;
     document.getElementById("formymax").value=ymax+cy;
     context.clearRect(0,0,cwidth,cheight);
+    // console.log(deltaZoom0 + " - " + deltaZoom1);
+    // canvas.style.transform = "scale("+deltaZoom1+")"
     context.putImageData(img,mx,my);
+    context.drawImage(canvas,0,0,cwidth,cheight,0,0,cwidth*deltaZoom1,cheight*deltaZoom1);
 }
 function end(event){
     mov=false;
@@ -505,6 +528,9 @@ function end(event){
     var my = m_y-m_y0;
     var cx = - mx*xs;
     var cy = my*ys;
+    if (deltaZoom1 != 1) setZoom(deltaZoom1);
+    canvas.style.transform = "scale(1)";
+    deltaZoom1 = 1;
     xmin+=cx;document.getElementById("formxmin").value=xmin;
     xmax+=cx;document.getElementById("formxmax").value=xmax;
     ymin+=cy;document.getElementById("formymin").value=ymin;
