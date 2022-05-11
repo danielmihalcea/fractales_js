@@ -320,6 +320,46 @@ function heightway(){
     dragon(3,0,1,0,0,context);
 }
 
+function rotate(M, O, angle) {
+    var xM, yM, x, y;
+    angle *= Math.PI / 180;
+    xM = M.x - O.x;
+    yM = M.y - O.y;
+    xM *= .67;yM *= .67;
+    x = xM * Math.cos (angle) + yM * Math.sin (angle) + O.x;
+    y = - xM * Math.sin (angle) + yM * Math.cos (angle) + O.y;
+    return ({x:Math.round (x), y:Math.round (y)});
+}
+
+function tree() {
+    let ctx = canvas.getContext("2d");
+    ctx.strokeStyle = "green";
+    ctx.lineJoin = "bevel";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    let x1 = 0, y1 = -1, x2 = 0, y2 = -.3;
+    let xs = cwidth/(xmax-xmin);
+    let ys = cheight/(ymax-ymin);
+    let xa = (x1-xmin)*xs;
+    let ya = (-y1+ymax)*ys;
+    let xb = (x2-xmin)*xs;
+    let yb = (-y2+ymax)*ys;
+    branch(xa, ya, xb, yb, 0, ctx);
+}
+
+function branch(x0, y0, x1, y1, i, ctx) {
+    if (i++>nmax) return;
+    ctx.beginPath();
+    ctx.moveTo(x0,y0);
+    ctx.lineTo(x1,y1);
+    ctx.lineWidth = 9-i;
+    ctx.stroke();
+    let b1 = rotate({x:x0, y:y0}, {x:x1, y:y1}, -150)
+    let b2 = rotate({x:x0, y:y0}, {x:x1, y:y1}, 130)
+    branch(x1, y1, b1.x, b1.y, i, ctx);
+    branch(x1, y1, b2.x, b2.y, i, ctx);
+}
+
 function draw(){
     cwidth = canvas.width = canvas.offsetWidth;
     cheight = canvas.height = canvas.offsetHeight;
@@ -380,6 +420,12 @@ function selectFract(f) {
             iter.step = 1;
             iter.value = 15;
             break;
+        case 9: // tree
+            iter.min = 0;
+            iter.max = 18;
+            iter.step = 1;
+            iter.value = 14;
+            break;
     }
     nmax = parseInt(iter.value);
     document.getElementById("formiter2").value = iter.value;
@@ -415,6 +461,9 @@ function fractale(){
         case 8:
             heightway();
             break;
+        case 9:
+            tree();
+            break;
     }
 }
 
@@ -423,7 +472,7 @@ function reinit(){
     xmax = 1;document.getElementById("formxmax").value=xmax;
     ymin = -1.2;document.getElementById("formymin").value=ymin;
     ymax = 1.2;document.getElementById("formymax").value=ymax;
-    nmax = 1000;document.getElementById("formiter").value=nmax;
+    // nmax = 1000;document.getElementById("formiter").value=nmax;
     draw();
 }
 function ratio(){
