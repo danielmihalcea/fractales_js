@@ -333,7 +333,7 @@ function rotate(M, O, angle) {
 
 function tree() {
     let ctx = canvas.getContext("2d");
-    ctx.strokeStyle = "green";
+    ctx.strokeStyle = "brown";
     ctx.lineJoin = "bevel";
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -348,7 +348,9 @@ function tree() {
 }
 
 function branch(x0, y0, x1, y1, i, ctx) {
-    if (i++>nmax) return;
+    if ((i++>nmax) || (i>20)) return;
+    if (i>5) ctx.strokeStyle = "Green";
+    else ctx.strokeStyle = "SaddleBrown";
     ctx.beginPath();
     ctx.moveTo(x0,y0);
     ctx.lineTo(x1,y1);
