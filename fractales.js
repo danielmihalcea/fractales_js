@@ -168,8 +168,8 @@ function collatz() {
                 let im = ((2+5*x1)*Math.sin(Math.PI*x1)*Math.sinh(Math.PI*y1)+7*y1-5*y1*Math.cos(Math.PI*x1)*Math.cosh(Math.PI*y1))/4;
                 x1 = re;
                 y1 = im;
-                // if (math.norm(z)>1000){break;}
-                if (re*re+im*im>1000000){break;}
+                // if (math.norm(z)>100){break;}
+                if (re*re+im*im>10000){break;}
             }
             if (i === nmax){
                 r=v=b=0;
