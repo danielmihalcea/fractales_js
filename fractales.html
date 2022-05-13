@@ -13,6 +13,7 @@
 <select name="fract" id="formfract" oninput="selectFract(this.value);">
     <option value="1">Mandelbrot</option>
     <option value="11" selected>Mandelbrot (GPU)</option>
+    <option value="10">Collatz</option>
     <option value="2">Julia 1</option>
     <option value="3">Julia 2</option>
     <option value="4">Julia 3</option>
@@ -40,6 +41,7 @@ fenêtre<br>
 <input type="button" value="Rendu" onclick="draw();"><br>
 <span id="disp"></span>
 </form>
+<script src="https://pagecdn.io/lib/mathjs/10.5.3/math.min.js"></script>
 <script src="gpu-browser.min.js"></script><script src="fractales.js"></script>
 </body>
 </html>

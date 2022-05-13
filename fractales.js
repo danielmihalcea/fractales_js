@@ -149,6 +149,45 @@ function julia(n){
     context.putImageData(img, 0, 0);
 }
 
+function collatz() {
+    var context,img,r,v,b,a=255;
+    context = canvas.getContext("2d");
+    var xs = (xmax-xmin)/cwidth;
+    var ys = (ymax-ymin)/cheight;
+    img = context.createImageData(cwidth,cheight);
+    for (var y=0,j=0;y<cheight;y++){
+        var cy = ymax - y*ys;
+        for (var x=0;x<cwidth;x++){
+            var cx = xmin + x*xs;
+            var x1 = cx;
+            var y1 = cy;
+            // let z = math.complex(x1, y1)
+            for(var i=0;i<nmax;i++){
+                // z = math.divide(math.subtract(math.add(2,math.multiply(7,z)),math.multiply((math.add(2,math.multiply(5,z))),math.cos(math.multiply(Math.PI,z)))),4);
+                let re = (2-(2+5*x1)*Math.cos(Math.PI*x1)*Math.cosh(Math.PI*y1)+7*x1-5*y1*Math.sin(Math.PI*x1)*Math.sinh(Math.PI*y1))/4;
+                let im = ((2+5*x1)*Math.sin(Math.PI*x1)*Math.sinh(Math.PI*y1)+7*y1-5*y1*Math.cos(Math.PI*x1)*Math.cosh(Math.PI*y1))/4;
+                x1 = re;
+                y1 = im;
+                // if (math.norm(z)>1000){break;}
+                if (re*re+im*im>1000000){break;}
+            }
+            if (i === nmax){
+                r=v=b=0;
+            } else {
+                b=i*40;//coul[i]*2;
+                v=i*2;
+                r=i;
+            }
+            img.data[j++] = r;
+            img.data[j++] = v;
+            img.data[j++] = b;
+            img.data[j++] = a;
+        }
+    }
+    context.putImageData(img, 0, 0);
+    
+}
+
 var cosa = Math.cos(Math.PI/3);
 var sina = Math.sin(Math.PI/3);
 function koch(x1,y1,x2,y2,i,ctx){
@@ -398,6 +437,12 @@ function selectFract(f) {
             iter.step = 1000;
             iter.value = 1000;
             break;
+        case 10: // Collatz
+            iter.min = 1;
+            iter.max = 20;
+            iter.step = 1;
+            iter.value = 10;
+            break;
         case 5: // Koch 1
             iter.min = 0;
             iter.max = 9;
@@ -441,6 +486,9 @@ function fractale(){
             break;
         case 11:
             mandelGPU();
+            break;
+        case 10:
+            collatz();
             break;
         case 2:
             julia(1);
