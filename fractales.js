@@ -161,22 +161,22 @@ function collatz() {
             var cx = xmin + x*xs;
             var x1 = cx;
             var y1 = cy;
-            // let z = math.complex(x1, y1)
             for(var i=0;i<nmax;i++){
-                // z = math.divide(math.subtract(math.add(2,math.multiply(7,z)),math.multiply((math.add(2,math.multiply(5,z))),math.cos(math.multiply(Math.PI,z)))),4);
-                let re = (2-(2+5*x1)*Math.cos(Math.PI*x1)*Math.cosh(Math.PI*y1)+7*x1-5*y1*Math.sin(Math.PI*x1)*Math.sinh(Math.PI*y1))/4;
-                let im = ((2+5*x1)*Math.sin(Math.PI*x1)*Math.sinh(Math.PI*y1)+7*y1-5*y1*Math.cos(Math.PI*x1)*Math.cosh(Math.PI*y1))/4;
+                let cosr = Math.cos(Math.PI*x1)*Math.cosh(Math.PI*y1);
+                let cosi = Math.sin(Math.PI*x1)*Math.sinh(Math.PI*y1);
+                let re = (2-(2+5*x1)*cosr+7*x1-5*y1*cosi)/4;
+                let im = ((2+5*x1)*cosi+7*y1-5*y1*cosr)/4;
                 x1 = re;
                 y1 = im;
-                // if (math.norm(z)>100){break;}
                 if (re*re+im*im>10000){break;}
             }
             if (i === nmax){
                 r=v=b=0;
             } else {
-                b=i*40;//coul[i]*2;
-                v=i*2;
-                r=i;
+                b=i*60;//coul[i]*2;
+                v=(i-4)*80;
+                r=(i-4)*10;
+                // r=v=b=i*10;
             }
             img.data[j++] = r;
             img.data[j++] = v;
@@ -438,10 +438,10 @@ function selectFract(f) {
             iter.value = 1000;
             break;
         case 10: // Collatz
-            iter.min = 1;
-            iter.max = 20;
-            iter.step = 1;
-            iter.value = 10;
+            iter.min = 10;
+            iter.max = 1000;
+            iter.step = 10;
+            iter.value = 100;
             break;
         case 5: // Koch 1
             iter.min = 0;
