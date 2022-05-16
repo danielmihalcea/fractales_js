@@ -149,6 +149,44 @@ function julia(n){
     context.putImageData(img, 0, 0);
 }
 
+var collGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,cheight) {
+    let x = [0,0];
+    x = coord([this.thread.x, this.thread.y], [xmin, xmax, ymin, ymax], [cwidth, cheight]);
+    let cx = x[0];
+    let cy = x[1];
+    let x1 = cx;
+    let y1 = cy;
+    let out = false;
+    let i = 0;
+    for(;i<nmax;i++){
+        let cosr = Math.cos(Math.PI*x1)*Math.cosh(Math.PI*y1);
+        let cosi = Math.sin(Math.PI*x1)*Math.sinh(Math.PI*y1);
+        let re = (2-(2+5*x1)*cosr+7*x1-5*y1*cosi)/4;
+        let im = ((2+5*x1)*cosi+7*y1-5*y1*cosr)/4;
+        x1 = re;
+        y1 = im;
+        if (re*re+im*im>10000){out=true;break;}
+    }
+    if (out){
+        let b=i*60;
+        let v=(i-4)*80;
+        let r=(i-4)*10;
+        this.color(r/256, v/256, b/256);
+    } else {
+        this.color(0, 0, 0);
+    }
+})
+//   .setPrecision('single')
+//   .setTactic('precision')
+  .setLoopMaxIterations(10000)
+  .setOutput([cwidth, cheight])
+  .setGraphical(true);
+
+function collatzGPU() {
+    collGPU(xmin,xmax,ymin,ymax,nmax,cwidth,cheight);
+    document.getElementById('canvas').getContext('2d').drawImage(gpu.canvas, 0, 0);
+}
+
 function collatz() {
     var context,img,r,v,b,a=255;
     context = canvas.getContext("2d");
@@ -489,6 +527,9 @@ function fractale(){
             break;
         case 10:
             collatz();
+            break;
+        case 20:
+            collatzGPU();
             break;
         case 2:
             julia(1);
