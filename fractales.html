@@ -3,24 +3,52 @@
 <head>
 <title>Fractales JavaScript</title>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="user-scalable=no">
 <link rel="stylesheet" href="fractales.css">
 </head>
 <body>
 <canvas id="canvas"></canvas>
 <form id="param">
-Choix de la fractale<br>
-<label for="formmand">Mandelbrot</label><input id="formmand" type="radio" name="fract" onchange="selectFract(1);" checked><br>
-<label for="formmandg">Mandelbrot(GPU)</label><input id="formmandg" type="radio" name="fract" onchange="selectFract(11);"><br>
-<label for="formjul1">Julia 1</label><input id="formjul1" type="radio" name="fract" onchange="selectFract(2);"><br>
-<label for="formjul2">Julia 2</label><input id="formjul2" type="radio" name="fract" onchange="selectFract(3);"><br>
-<label for="formjul3">Julia 3</label><input id="formjul3" type="radio" name="fract" onchange="selectFract(4);"><br>
-<label for="formkoc1">Koch 1</label><input id="formkoc1" type="radio" name="fract" onchange="selectFract(5);"><br>
-<label for="formkoc2">Koch 2</label><input id="formkoc2" type="radio" name="fract" onchange="selectFract(6);"><br>
-<label for="formsier">Sierpiński</label><input id="formsier" type="radio" name="fract" onchange="selectFract(7);"><br>
-<label for="formdrag">Heighway</label><input id="formdrag" type="radio" name="fract" onchange="selectFract(8);">
+<label for="formfract">Fractale</label><br>
+<select name="fract" id="formfract" oninput="selectFract(this.value);">
+    <optgroup label="Mandelbrot">
+        <option value="1">Vanila 🐌</option>
+        <option value="11" selected>GPU ⚡</option>
+    </optgroup>
+    <optgroup label="Collatz">
+        <option value="10">Vanila 🐌</option>
+        <option value="20">GPU ⚡</option>
+    </optgroup>
+    <optgroup label="Julia">
+        <option value="2">0,285 + 0,01 𝑖</option>
+        <option value="3">0,28 - 0,02 𝑖</option>
+        <option value="4">-0,15 + 1,03 𝑖</option>
+        <option value="12">GPU ⚡</option>
+    </optgroup>
+    <optgroup label="Géométrie">
+        <option value="5">Koch 1 △</option>
+        <option value="6">Koch 2 □</option>
+        <option value="7">Sierpiński ▲</option>
+        <option value="8">Heighway 🐉</option>
+        <option value="9">Tree 🌳</option>
+    </optgroup>
+</select>
+<br>
 <hr>
-<label for="formiter" title="limite, Koch1 : 9, Koch2 : 5, Sierpiński : 12, Heighway : 18">Itérations</label><input id="formiter" type="range" min="100" step="100" max="10000" value="1000" oninput="document.getElementById('formiter2').value=document.getElementById('formiter').value;nmax=parseInt(this.value);calCoul();"><br>
+<label for="formiter" title="limite, Koch1 : 9, Koch2 : 5, Sierpiński : 12, Heighway : 18">Itérations</label>
 <label for="formiter2">&nbsp;</label><output id="formiter2" value="1000">1000</output>
+<br>
+<input id="formiter" type="range" min="1000" step="1000" max="10000" value="1000" oninput="document.getElementById('formiter2').value=document.getElementById('formiter').value;nmax=parseInt(this.value);calCoul();draw();">
+<div id="juliacri" style="display:none">
+<label for="formcr">Cr</label>
+<label for="formcr2">&nbsp;</label><output id="formcr2" value="0.3">0.3</output>
+<br>
+<input id="formcr" type="range" min="-1" step="0.01" max="1" value="0.28" oninput="document.getElementById('formcr2').value=document.getElementById('formcr').value;cr=parseFloat(this.value);calCoul();draw();">
+<label for="formci">Ci</label>
+<label for="formci2">&nbsp;</label><output id="formci2" value="0.3">0.3</output>
+<br>
+<input id="formci" type="range" min="-1" step="0.01" max="1" value="0.01" oninput="document.getElementById('formci2').value=document.getElementById('formci').value;ci=parseFloat(this.value);calCoul();draw();">
+</div>
 <hr>
 fenêtre<br>
 <label for="formxmin">xmin</label><input id="formxmin" type="text" value="-2" onchange="xmin=parseInt(this.value);"><br>

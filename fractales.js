@@ -11,7 +11,9 @@ var ymax = 1.2;
 
 var nmax = 1000;
 var l = 4;
-var frct = 1;
+var frct = 11;
+var cr = 0.28;
+var ci = 0.01;
 
 var d0,d1;
 
@@ -101,6 +103,39 @@ function mandelbrot(){
     context.putImageData(img, 0, 0);
 }
 
+var juliaGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,cheight,cr,ci) {
+    let x = [0,0];
+    x = coord([this.thread.x, this.thread.y], [xmin, xmax, ymin, ymax], [cwidth, cheight]);
+    let cx = x[0];
+    let cy = x[1];
+    let x1 = cx;
+    let y1 = cy;
+    let out = false;
+    let i = 0;
+    for(;i<nmax;i++){
+                let xx = x1**2;
+                let yy = y1**2;
+                if (xx+yy>4){out=true;break;}
+                y1 = 2*x1*y1+ci;
+                x1 = xx-yy+cr;
+            }
+    if (out){
+        this.color(Math.log10(i)/2, i*2/256, i/256);
+    } else {
+        this.color(0, 0, 0);
+    }
+})
+//   .setPrecision('single')
+//   .setTactic('precision')
+  .setLoopMaxIterations(10000)
+  .setOutput([cwidth, cheight])
+  .setGraphical(true);
+
+function julGPU(cr,ci) {
+juliaGPU(xmin,xmax,ymin,ymax,nmax,cwidth,cheight,cr,ci);
+document.getElementById('canvas').getContext('2d').drawImage(gpu.canvas, 0, 0);
+}
+
 function julia(n){
     var context,img,r,v,b,a=255;
     context = canvas.getContext("2d");
@@ -125,8 +160,8 @@ function julia(n){
             var x1 = cx;
             var y1 = cy;
             for(var i=0;i<nmax;i++){
-                var xx = x1*x1;
-                var yy = y1*y1;
+                var xx = x1**2;
+                var yy = y1**2;
                 if (xx+yy>l){break;}
                 y1 = 2*x1*y1+ci;
                 x1 = xx-yy+cr;
@@ -147,6 +182,84 @@ function julia(n){
         }
     }
     context.putImageData(img, 0, 0);
+}
+
+var collGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,cheight) {
+    let x = [0,0];
+    x = coord([this.thread.x, this.thread.y], [xmin, xmax, ymin, ymax], [cwidth, cheight]);
+    let cx = x[0];
+    let cy = x[1];
+    let x1 = cx;
+    let y1 = cy;
+    let out = false;
+    let i = 0;
+    let norm=0;
+    for(;i<1000;i++){
+        let cosr = Math.cos(Math.PI*x1)*Math.cosh(Math.PI*y1);
+        let cosi = Math.sin(Math.PI*x1)*Math.sinh(Math.PI*y1);
+        let re = (2-(2+5*x1)*cosr+7*x1-5*y1*cosi)/4;
+        let im = ((2+5*x1)*cosi+7*y1-5*y1*cosr)/4;
+        x1 = re;
+        y1 = im;
+        norm = re*re+im*im;
+        if (norm>nmax){out=true;break;}
+    }
+    if (out){
+        let b=i*60;
+        let v=(i-4)*80;
+        let r=(i-4)*10;
+        this.color(r/256, v/256, b/256);
+    } else {
+        this.color(0, 0, 0);
+    }
+})
+//   .setPrecision('single')
+//   .setTactic('precision')
+  .setLoopMaxIterations(10000)
+  .setOutput([cwidth, cheight])
+  .setGraphical(true);
+
+function collatzGPU() {
+    collGPU(xmin,xmax,ymin,ymax,nmax,cwidth,cheight);
+    document.getElementById('canvas').getContext('2d').drawImage(gpu.canvas, 0, 0);
+}
+
+function collatz() {
+    var context,img,r,v,b,a=255;
+    context = canvas.getContext("2d");
+    var xs = (xmax-xmin)/cwidth;
+    var ys = (ymax-ymin)/cheight;
+    img = context.createImageData(cwidth,cheight);
+    for (var y=0,j=0;y<cheight;y++){
+        var cy = ymax - y*ys;
+        for (var x=0;x<cwidth;x++){
+            var cx = xmin + x*xs;
+            var x1 = cx;
+            var y1 = cy;
+            for(var i=0;i<nmax;i++){
+                let cosr = Math.cos(Math.PI*x1)*Math.cosh(Math.PI*y1);
+                let cosi = Math.sin(Math.PI*x1)*Math.sinh(Math.PI*y1);
+                let re = (2-(2+5*x1)*cosr+7*x1-5*y1*cosi)/4;
+                let im = ((2+5*x1)*cosi+7*y1-5*y1*cosr)/4;
+                x1 = re;
+                y1 = im;
+                if (re*re+im*im>10000){break;}
+            }
+            if (i === nmax){
+                r=v=b=0;
+            } else {
+                b=i*60;//coul[i]*2;
+                v=(i-4)*80;
+                r=(i-4)*10;
+                // r=v=b=i*10;
+            }
+            img.data[j++] = r;
+            img.data[j++] = v;
+            img.data[j++] = b;
+            img.data[j++] = a;
+        }
+    }
+    context.putImageData(img, 0, 0);  
 }
 
 var cosa = Math.cos(Math.PI/3);
@@ -320,10 +433,58 @@ function heightway(){
     dragon(3,0,1,0,0,context);
 }
 
+function rotate(M, O, angle) {
+    var xM, yM, x, y;
+    angle *= Math.PI / 180;
+    xM = M.x - O.x;
+    yM = M.y - O.y;
+    xM *= .67;yM *= .67;
+    x = xM * Math.cos (angle) + yM * Math.sin (angle) + O.x;
+    y = - xM * Math.sin (angle) + yM * Math.cos (angle) + O.y;
+    return ({x:Math.round (x), y:Math.round (y)});
+}
+
+function tree() {
+    let ctx = canvas.getContext("2d");
+    ctx.strokeStyle = "brown";
+    ctx.lineJoin = "bevel";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    let x1 = 0, y1 = -1, x2 = 0, y2 = -.3;
+    let xs = cwidth/(xmax-xmin);
+    let ys = cheight/(ymax-ymin);
+    let xa = (x1-xmin)*xs;
+    let ya = (-y1+ymax)*ys;
+    let xb = (x2-xmin)*xs;
+    let yb = (-y2+ymax)*ys;
+    branch(xa, ya, xb, yb, 0, ctx);
+}
+
+function branch(x0, y0, x1, y1, i, ctx) {
+    if ((i++>nmax) || (i>20)) return;
+    if (i>5) ctx.strokeStyle = "Green";
+    else ctx.strokeStyle = "SaddleBrown";
+    ctx.beginPath();
+    ctx.moveTo(x0,y0);
+    ctx.lineTo(x1,y1);
+    ctx.lineWidth = 9-i;
+    ctx.stroke();
+    let b1 = rotate({x:x0, y:y0}, {x:x1, y:y1}, -150)
+    let b2 = rotate({x:x0, y:y0}, {x:x1, y:y1}, 130)
+    branch(x1, y1, b1.x, b1.y, i, ctx);
+    branch(x1, y1, b2.x, b2.y, i, ctx);
+}
+
 function draw(){
     cwidth = canvas.width = canvas.offsetWidth;
     cheight = canvas.height = canvas.offsetHeight;
+    let ctx = canvas.getContext("2d");
+    // ctx.textAlign = "center";ctx.font = '48px sans-serif';ctx.color = "#000";ctx.strokeStyle="#fff";
+    // ctx.fillText('Hello world', 200, 200);
+    // ctx.strokeText('Hello world', 200, 200);
+    // window.requestAnimationFrame(function(){let ctx = canvas.getContext("2d");ctx.fillText('Hello world', 200, 200);ctx.strokeText('Hello world', 200, 200);})
     d0 = performance.now();
+    window.requestAnimationFrame(fractale)
     fractale();
     d1 = performance.now();
     let d = (d1-d0)/1000; // durée d'execution en secondes
@@ -331,7 +492,7 @@ function draw(){
 }
 
 function selectFract(f) {
-    frct = f;
+    frct = parseInt(f);
     let iter = document.getElementById("formiter");
     switch(frct){
         case 1: // mandelbrot
@@ -345,9 +506,22 @@ function selectFract(f) {
             iter.value = 1000;
             break;
         case 11: // mandelbrot gpu
+        case 12: // julia GPU
             iter.min = 1000;
             iter.max = 10000;
             iter.step = 1000;
+            iter.value = 1000;
+            break;
+        case 10: // Collatz
+            iter.min = 10;
+            iter.max = 1000;
+            iter.step = 10;
+            iter.value = 100;
+            break;
+        case 20: // Collatz
+            iter.min = 10;
+            iter.max = 10000;
+            iter.step = 10;
             iter.value = 10000;
             break;
         case 5: // Koch 1
@@ -374,11 +548,19 @@ function selectFract(f) {
             iter.step = 1;
             iter.value = 15;
             break;
+        case 9: // tree
+            iter.min = 0;
+            iter.max = 18;
+            iter.step = 1;
+            iter.value = 14;
+            break;
     }
     nmax = parseInt(iter.value);
     document.getElementById("formiter2").value = iter.value;
+    draw();
 }
 function fractale(){
+    document.getElementById("juliacri").style="display:none;";
     switch(frct){
         case 1:
         default:
@@ -387,8 +569,18 @@ function fractale(){
         case 11:
             mandelGPU();
             break;
+        case 10:
+            collatz();
+            break;
+        case 20:
+            collatzGPU();
+            break;
         case 2:
             julia(1);
+            break;
+        case 12:
+            document.getElementById("juliacri").style="display:block;";
+            julGPU(cr,ci);
             break;
         case 3:
             julia(2);
@@ -408,6 +600,9 @@ function fractale(){
         case 8:
             heightway();
             break;
+        case 9:
+            tree();
+            break;
     }
 }
 
@@ -416,7 +611,7 @@ function reinit(){
     xmax = 1;document.getElementById("formxmax").value=xmax;
     ymin = -1.2;document.getElementById("formymin").value=ymin;
     ymax = 1.2;document.getElementById("formymax").value=ymax;
-    nmax = 1000;document.getElementById("formiter").value=nmax;
+    // nmax = 1000;document.getElementById("formiter").value=nmax;
     draw();
 }
 function ratio(){
@@ -429,6 +624,14 @@ function ratio(){
 }
 
 function handle(delta) {
+    if (delta > 0){
+        setZoom(.5);
+    }else{
+        setZoom(2);
+    }
+    draw();
+}
+function setZoom(f) {
     var dx = xmax-xmin;
     var dy = ymax-ymin;
     var xs = (xmax-xmin)/cwidth;
@@ -437,19 +640,12 @@ function handle(delta) {
     var y = parseInt(m_y);
     var cx = xmin + x*xs;
     var cy = ymax - y*ys;
-    
-    if (delta > 0){
-        dx*=2;
-        dy*=2;
-    }else{
-        dx/=2;
-        dy/=2;
-    }
+    dx/=f;
+    dy/=f;
     xmin = cx - dx/2;document.getElementById("formxmin").value=xmin;
     xmax = cx + dx/2;document.getElementById("formxmax").value=xmax;
     ymin = cy - dy/2;document.getElementById("formymin").value=ymin;
     ymax = cy + dy/2;document.getElementById("formymax").value=ymax;
-    draw();
 }
 
 function wheel(e){
@@ -471,12 +667,21 @@ var m_y = 0;
 var m_x0 = 0;
 var m_y0 = 0;
 
+var deltaZoom0 = 0; // distance des 2 doigts en pixels
+var deltaZoom1 = 1; // % de rapprochement des doigts
+function deltaZoom(e) {
+    return Math.hypot(e.targetTouches[1].pageX-e.targetTouches[0].pageX, e.targetTouches[1].pageY-e.targetTouches[0].pageY)
+}
 function begin(e){
     m_x0 = e.pageX || e.targetTouches[0].pageX;
     m_y0 = e.pageY || e.targetTouches[0].pageY;
     context = canvas.getContext("2d");
     img = context.getImageData(0, 0, cwidth, cheight);
     mov=true;
+    if (e.targetTouches && e.targetTouches.length === 2) {
+        deltaZoom0 = deltaZoom(e);
+        deltaZoom1 = 1;
+    }
 }
 
 function move(e){
@@ -490,12 +695,18 @@ function move(e){
     var my=m_y-m_y0;
     var cx=- mx*xs;
     var cy=my*ys;
+    if (e.targetTouches && e.targetTouches.length === 2) {
+        deltaZoom1 = deltaZoom(e)/deltaZoom0;
+    }
     document.getElementById("formxmin").value=xmin+cx;
     document.getElementById("formxmax").value=xmax+cx;
     document.getElementById("formymin").value=ymin+cy;
     document.getElementById("formymax").value=ymax+cy;
     context.clearRect(0,0,cwidth,cheight);
+    // console.log(deltaZoom0 + " - " + deltaZoom1);
+    // canvas.style.transform = "scale("+deltaZoom1+")"
     context.putImageData(img,mx,my);
+    context.drawImage(canvas,0,0,cwidth,cheight,0,0,cwidth*deltaZoom1,cheight*deltaZoom1);
 }
 function end(event){
     mov=false;
@@ -505,6 +716,9 @@ function end(event){
     var my = m_y-m_y0;
     var cx = - mx*xs;
     var cy = my*ys;
+    if (deltaZoom1 != 1) setZoom(deltaZoom1);
+    canvas.style.transform = "scale(1)";
+    deltaZoom1 = 1;
     xmin+=cx;document.getElementById("formxmin").value=xmin;
     xmax+=cx;document.getElementById("formxmax").value=xmax;
     ymin+=cy;document.getElementById("formymin").value=ymin;
