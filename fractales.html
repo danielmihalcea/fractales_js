@@ -11,17 +11,27 @@
 <form id="param">
 <label for="formfract">Fractale</label><br>
 <select name="fract" id="formfract" oninput="selectFract(this.value);">
-    <option value="1">Mandelbrot</option>
-    <option value="11" selected>Mandelbrot (GPU)</option>
-    <option value="10">Collatz</option>
-    <option value="2">Julia 1</option>
-    <option value="3">Julia 2</option>
-    <option value="4">Julia 3</option>
-    <option value="5">Koch 1</option>
-    <option value="6">Koch 2</option>
-    <option value="7">Sierpiński</option>
-    <option value="8">Heighway</option>
-    <option value="9">Tree</option>
+    <optgroup label="Mandelbrot">
+        <option value="1">Vanila 🐌</option>
+        <option value="11" selected>GPU ⚡</option>
+    </optgroup>
+    <optgroup label="Collatz">
+        <option value="10">Vanila 🐌</option>
+        <option value="20">GPU ⚡</option>
+    </optgroup>
+    <optgroup label="Julia">
+        <option value="2">0,285 + 0,01 𝑖</option>
+        <option value="3">0,28 - 0,02 𝑖</option>
+        <option value="4">-0,15 + 1,03 𝑖</option>
+        <option value="12">GPU ⚡</option>
+    </optgroup>
+    <optgroup label="Géométrie">
+        <option value="5">Koch 1 △</option>
+        <option value="6">Koch 2 □</option>
+        <option value="7">Sierpiński ▲</option>
+        <option value="8">Heighway 🐉</option>
+        <option value="9">Tree 🌳</option>
+    </optgroup>
 </select>
 <br>
 <hr>
@@ -29,6 +39,16 @@
 <label for="formiter2">&nbsp;</label><output id="formiter2" value="1000">1000</output>
 <br>
 <input id="formiter" type="range" min="1000" step="1000" max="10000" value="1000" oninput="document.getElementById('formiter2').value=document.getElementById('formiter').value;nmax=parseInt(this.value);calCoul();draw();">
+<div id="juliacri" style="display:none">
+<label for="formcr">Cr</label>
+<label for="formcr2">&nbsp;</label><output id="formcr2" value="0.3">0.3</output>
+<br>
+<input id="formcr" type="range" min="-1" step="0.01" max="1" value="0.28" oninput="document.getElementById('formcr2').value=document.getElementById('formcr').value;cr=parseFloat(this.value);calCoul();draw();">
+<label for="formci">Ci</label>
+<label for="formci2">&nbsp;</label><output id="formci2" value="0.3">0.3</output>
+<br>
+<input id="formci" type="range" min="-1" step="0.01" max="1" value="0.01" oninput="document.getElementById('formci2').value=document.getElementById('formci').value;ci=parseFloat(this.value);calCoul();draw();">
+</div>
 <hr>
 fenêtre<br>
 <label for="formxmin">xmin</label><input id="formxmin" type="text" value="-2" onchange="xmin=parseInt(this.value);"><br>

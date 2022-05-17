@@ -12,6 +12,8 @@ var ymax = 1.2;
 var nmax = 1000;
 var l = 4;
 var frct = 11;
+var cr = 0.28;
+var ci = 0.01;
 
 var d0,d1;
 
@@ -101,6 +103,39 @@ function mandelbrot(){
     context.putImageData(img, 0, 0);
 }
 
+var juliaGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,cheight,cr,ci) {
+    let x = [0,0];
+    x = coord([this.thread.x, this.thread.y], [xmin, xmax, ymin, ymax], [cwidth, cheight]);
+    let cx = x[0];
+    let cy = x[1];
+    let x1 = cx;
+    let y1 = cy;
+    let out = false;
+    let i = 0;
+    for(;i<nmax;i++){
+                let xx = x1**2;
+                let yy = y1**2;
+                if (xx+yy>4){out=true;break;}
+                y1 = 2*x1*y1+ci;
+                x1 = xx-yy+cr;
+            }
+    if (out){
+        this.color(Math.log10(i)/2, i*2/256, i/256);
+    } else {
+        this.color(0, 0, 0);
+    }
+})
+//   .setPrecision('single')
+//   .setTactic('precision')
+  .setLoopMaxIterations(10000)
+  .setOutput([cwidth, cheight])
+  .setGraphical(true);
+
+function julGPU(cr,ci) {
+juliaGPU(xmin,xmax,ymin,ymax,nmax,cwidth,cheight,cr,ci);
+document.getElementById('canvas').getContext('2d').drawImage(gpu.canvas, 0, 0);
+}
+
 function julia(n){
     var context,img,r,v,b,a=255;
     context = canvas.getContext("2d");
@@ -125,8 +160,8 @@ function julia(n){
             var x1 = cx;
             var y1 = cy;
             for(var i=0;i<nmax;i++){
-                var xx = x1*x1;
-                var yy = y1*y1;
+                var xx = x1**2;
+                var yy = y1**2;
                 if (xx+yy>l){break;}
                 y1 = 2*x1*y1+ci;
                 x1 = xx-yy+cr;
@@ -158,14 +193,16 @@ var collGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,cheight)
     let y1 = cy;
     let out = false;
     let i = 0;
-    for(;i<nmax;i++){
+    let norm=0;
+    for(;i<1000;i++){
         let cosr = Math.cos(Math.PI*x1)*Math.cosh(Math.PI*y1);
         let cosi = Math.sin(Math.PI*x1)*Math.sinh(Math.PI*y1);
         let re = (2-(2+5*x1)*cosr+7*x1-5*y1*cosi)/4;
         let im = ((2+5*x1)*cosi+7*y1-5*y1*cosr)/4;
         x1 = re;
         y1 = im;
-        if (re*re+im*im>10000){out=true;break;}
+        norm = re*re+im*im;
+        if (norm>nmax){out=true;break;}
     }
     if (out){
         let b=i*60;
@@ -222,8 +259,7 @@ function collatz() {
             img.data[j++] = a;
         }
     }
-    context.putImageData(img, 0, 0);
-    
+    context.putImageData(img, 0, 0);  
 }
 
 var cosa = Math.cos(Math.PI/3);
@@ -470,6 +506,7 @@ function selectFract(f) {
             iter.value = 1000;
             break;
         case 11: // mandelbrot gpu
+        case 12: // julia GPU
             iter.min = 1000;
             iter.max = 10000;
             iter.step = 1000;
@@ -480,6 +517,12 @@ function selectFract(f) {
             iter.max = 1000;
             iter.step = 10;
             iter.value = 100;
+            break;
+        case 20: // Collatz
+            iter.min = 10;
+            iter.max = 10000;
+            iter.step = 10;
+            iter.value = 10000;
             break;
         case 5: // Koch 1
             iter.min = 0;
@@ -517,6 +560,7 @@ function selectFract(f) {
     draw();
 }
 function fractale(){
+    document.getElementById("juliacri").style="display:none;";
     switch(frct){
         case 1:
         default:
@@ -533,6 +577,10 @@ function fractale(){
             break;
         case 2:
             julia(1);
+            break;
+        case 12:
+            document.getElementById("juliacri").style="display:block;";
+            julGPU(cr,ci);
             break;
         case 3:
             julia(2);
