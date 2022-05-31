@@ -4,4 +4,4 @@ body{margin:0;padding:0;background:#000;font-family:arial;font-size:16px;letter-
 label{display:block;float:left;margin-right:16px;text-align:right;width:100px;}
 input{width:100px;}
 #canvas{background:#000;height:100%;width:100%;position:absolute;}
-#param{position:absolute;top:0px;right:0px;width:230px;padding:10px;/*text-align:justify*/;background: #fff;}
+#param{position:absolute;top:0px;right:0px;width:230px;padding:10px;background:black;color:white;font-weight:bold;opacity:.7;transition:1s;}

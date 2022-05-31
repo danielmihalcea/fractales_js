@@ -34,7 +34,7 @@ function coord(x, w, c) { // x[x, y], w[xmin, xmax, ymin, ymax], c[cwidth, cheig
 }
 
 const gpu = new GPU();
-gpu.addFunction(coord);
+gpu.addFunction(coord/*,{precision:'single', tactic:'precision'}*/);
 var mandelbrotGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,cheight) {
     let x = [0,0];
     x = coord([this.thread.x, this.thread.y], [xmin, xmax, ymin, ymax], [cwidth, cheight]);
@@ -479,10 +479,6 @@ function draw(){
     cwidth = canvas.width = canvas.offsetWidth;
     cheight = canvas.height = canvas.offsetHeight;
     let ctx = canvas.getContext("2d");
-    // ctx.textAlign = "center";ctx.font = '48px sans-serif';ctx.color = "#000";ctx.strokeStyle="#fff";
-    // ctx.fillText('Hello world', 200, 200);
-    // ctx.strokeText('Hello world', 200, 200);
-    // window.requestAnimationFrame(function(){let ctx = canvas.getContext("2d");ctx.fillText('Hello world', 200, 200);ctx.strokeText('Hello world', 200, 200);})
     d0 = performance.now();
     window.requestAnimationFrame(fractale)
     fractale();
@@ -606,12 +602,19 @@ function fractale(){
     }
 }
 
+var showParam = true;
+
+function toggleParam() {
+    if (showParam) document.getElementById("param").style.right="-250px";
+    else document.getElementById("param").style.right="0px";
+    showParam = !showParam;
+}
+
 function reinit(){
     xmin = -2;document.getElementById("formxmin").value=xmin;
     xmax = 1;document.getElementById("formxmax").value=xmax;
     ymin = -1.2;document.getElementById("formymin").value=ymin;
     ymax = 1.2;document.getElementById("formymax").value=ymax;
-    // nmax = 1000;document.getElementById("formiter").value=nmax;
     draw();
 }
 function ratio(){
@@ -638,6 +641,7 @@ function setZoom(f) {
     var ys = (ymax-ymin)/cheight;
     var x = parseInt(m_x);
     var y = parseInt(m_y);
+    console.log(x+" "+y);
     var cx = xmin + x*xs;
     var cy = ymax - y*ys;
     dx/=f;
@@ -672,15 +676,18 @@ var deltaZoom1 = 1; // % de rapprochement des doigts
 function deltaZoom(e) {
     return Math.hypot(e.targetTouches[1].pageX-e.targetTouches[0].pageX, e.targetTouches[1].pageY-e.targetTouches[0].pageY)
 }
+var nbTouch=0;
 function begin(e){
-    m_x0 = e.pageX || e.targetTouches[0].pageX;
-    m_y0 = e.pageY || e.targetTouches[0].pageY;
+    nbTouch = 1;
+    m_x = m_x0 = e.pageX || e.targetTouches[0].pageX;
+    m_y = m_y0 = e.pageY || e.targetTouches[0].pageY;
     context = canvas.getContext("2d");
     img = context.getImageData(0, 0, cwidth, cheight);
     mov=true;
     if (e.targetTouches && e.targetTouches.length === 2) {
         deltaZoom0 = deltaZoom(e);
         deltaZoom1 = 1;
+        nbTouch = 2;
     }
 }
 
@@ -695,20 +702,20 @@ function move(e){
     var my=m_y-m_y0;
     var cx=- mx*xs;
     var cy=my*ys;
-    if (e.targetTouches && e.targetTouches.length === 2) {
-        deltaZoom1 = deltaZoom(e)/deltaZoom0;
-    }
     document.getElementById("formxmin").value=xmin+cx;
     document.getElementById("formxmax").value=xmax+cx;
     document.getElementById("formymin").value=ymin+cy;
     document.getElementById("formymax").value=ymax+cy;
     context.clearRect(0,0,cwidth,cheight);
-    // console.log(deltaZoom0 + " - " + deltaZoom1);
-    // canvas.style.transform = "scale("+deltaZoom1+")"
     context.putImageData(img,mx,my);
-    context.drawImage(canvas,0,0,cwidth,cheight,0,0,cwidth*deltaZoom1,cheight*deltaZoom1);
+    if (e.targetTouches && e.targetTouches.length === 2) {
+        deltaZoom1 = deltaZoom(e)/deltaZoom0;
+        context.drawImage(canvas,0,0,cwidth,cheight,mx,my,cwidth*deltaZoom1,cheight*deltaZoom1);
+    }
 }
-function end(event){
+function end(){
+    if (nbTouch === 0) return;
+    if (nbTouch === 2) nbTouch = 0;
     mov=false;
     var xs = (xmax-xmin)/cwidth;
     var ys = (ymax-ymin)/cheight;
@@ -716,8 +723,12 @@ function end(event){
     var my = m_y-m_y0;
     var cx = - mx*xs;
     var cy = my*ys;
-    if (deltaZoom1 != 1) setZoom(deltaZoom1);
-    canvas.style.transform = "scale(1)";
+    if (deltaZoom1 != 1) {
+        m_x = cwidth/2+mx;
+        m_y = cheight/2+my;
+        setZoom(deltaZoom1);
+    }
+    // canvas.style.transform = "scale(1)";
     deltaZoom1 = 1;
     xmin+=cx;document.getElementById("formxmin").value=xmin;
     xmax+=cx;document.getElementById("formxmax").value=xmax;
@@ -727,7 +738,6 @@ function end(event){
 }
 
 window.onresize = ratio;
-// canvas.onresize = ratio;
 canvas.addEventListener('wheel', wheel);
 
 canvas.addEventListener('mousedown', begin);
