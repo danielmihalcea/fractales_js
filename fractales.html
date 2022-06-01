@@ -44,11 +44,11 @@
 <input id="formiter" type="range" min="1000" step="1000" max="10000" value="1000" oninput="document.getElementById('formiter2').value=document.getElementById('formiter').value;nmax=parseInt(this.value);calCoul();draw();">
 <div id="juliacri" style="display:none">
 <label for="formcr">Cr</label>
-<label for="formcr2">&nbsp;</label><output id="formcr2" value="0.3">0.3</output>
+<label for="formcr2">&nbsp;</label><output id="formcr2" value="0.28">0.28</output>
 <br>
 <input id="formcr" type="range" min="-1" step="0.01" max="1" value="0.28" oninput="document.getElementById('formcr2').value=document.getElementById('formcr').value;cr=parseFloat(this.value);calCoul();draw();">
 <label for="formci">Ci</label>
-<label for="formci2">&nbsp;</label><output id="formci2" value="0.3">0.3</output>
+<label for="formci2">&nbsp;</label><output id="formci2" value="0.01">0.01</output>
 <br>
 <input id="formci" type="range" min="-1" step="0.01" max="1" value="0.01" oninput="document.getElementById('formci2').value=document.getElementById('formci').value;ci=parseFloat(this.value);calCoul();draw();">
 </div>

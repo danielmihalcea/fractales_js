@@ -641,7 +641,6 @@ function setZoom(f) {
     var ys = (ymax-ymin)/cheight;
     var x = parseInt(m_x);
     var y = parseInt(m_y);
-    console.log(x+" "+y);
     var cx = xmin + x*xs;
     var cy = ymax - y*ys;
     dx/=f;
