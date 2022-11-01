@@ -35,6 +35,7 @@ function coord(x, w, c) { // x[x, y], w[xmin, xmax, ymin, ymax], c[cwidth, cheig
 
 const gpu = new GPU();
 gpu.addFunction(coord/*,{precision:'single', tactic:'precision'}*/);
+
 var mandelbrotGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,cheight) {
     let x = [0,0];
     x = coord([this.thread.x, this.thread.y], [xmin, xmax, ymin, ymax], [cwidth, cheight]);
@@ -63,11 +64,6 @@ var mandelbrotGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,ch
   .setOutput([cwidth, cheight])
   .setGraphical(true);
 
-function mandelGPU() {
-mandelbrotGPU(xmin,xmax,ymin,ymax,nmax,cwidth,cheight);
-document.getElementById('canvas').getContext('2d').drawImage(gpu.canvas, 0, 0);
-}
-
 function mandelbrot(){
     var context,img,r,v,b,a=255;
     context = canvas.getContext("2d");
@@ -85,6 +81,69 @@ function mandelbrot(){
                 var yy = y1**2;
                 if (xx+yy>l){break;}
                 y1 = 2*x1*y1+cy;
+                x1 = xx-yy+cx;
+            }
+            if (i === nmax){
+                r=v=b=0;
+            } else {
+                r=coul[i];
+                v=i*2;
+                b=i;
+            }
+            img.data[j++] = r;
+            img.data[j++] = v;
+            img.data[j++] = b;
+            img.data[j++] = a;
+        }
+    }
+    context.putImageData(img, 0, 0);
+}
+
+var burningShipGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,cheight) {
+    let x = [0,0];
+    x = coord([this.thread.x, this.thread.y], [xmin, xmax, ymin, ymax], [cwidth, cheight]);
+    let cx = x[0];
+    let cy = -x[1];
+    let x1 = cx;
+    let y1 = cy;
+    let out = false;
+    let i = 0;
+    for(;i<nmax;i++){
+                let xx = x1**2;
+                let yy = y1**2;
+                if (xx+yy>4){out=true;break;}
+                y1 = Math.abs(2*x1*y1)+cy;
+                x1 = xx-yy+cx;
+            }
+    if (out){
+        this.color(Math.log10(i)/2, i*2/256, i/256);
+    } else {
+        this.color(0, 0, 0);
+    }
+})
+//   .setPrecision('single')
+//   .setTactic('precision')
+  .setLoopMaxIterations(10000)
+  .setOutput([cwidth, cheight])
+  .setGraphical(true);
+
+function burnShip(){
+    var context,img,r,v,b,a=255;
+    context = canvas.getContext("2d");
+    var xs = (xmax-xmin)/cwidth;
+    var ys = (ymax-ymin)/cheight;
+    img = context.createImageData(cwidth,cheight);
+    for (var y=0,j=0;y<cheight;y++){
+        var cy = y*ys - ymax; // invert y axis to see the ship
+        for (var x=0;x<cwidth;x++){
+            var cx = xmin + x*xs;
+            var x1 = cx;
+            var y1 = cy;
+            for(var i=0;i<nmax;i++){
+                var xx = x1**2;
+                var yy = y1**2;
+                if (xx+yy>l){break;}
+                y1 = Math.abs(2*x1*y1)+cy;
                 x1 = xx-yy+cx;
             }
             if (i === nmax){
@@ -130,11 +189,6 @@ var juliaGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,cheight
   .setLoopMaxIterations(10000)
   .setOutput([cwidth, cheight])
   .setGraphical(true);
-
-function julGPU(cr,ci) {
-juliaGPU(xmin,xmax,ymin,ymax,nmax,cwidth,cheight,cr,ci);
-document.getElementById('canvas').getContext('2d').drawImage(gpu.canvas, 0, 0);
-}
 
 function julia(n){
     var context,img,r,v,b,a=255;
@@ -218,11 +272,6 @@ var collGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,cheight)
   .setLoopMaxIterations(10000)
   .setOutput([cwidth, cheight])
   .setGraphical(true);
-
-function collatzGPU() {
-    collGPU(xmin,xmax,ymin,ymax,nmax,cwidth,cheight);
-    document.getElementById('canvas').getContext('2d').drawImage(gpu.canvas, 0, 0);
-}
 
 function collatz() {
     var context,img,r,v,b,a=255;
@@ -496,6 +545,7 @@ function selectFract(f) {
         case 2: // julia 1
         case 3: // julia 2
         case 4: // julia 3
+        case 13: // burning ship
             iter.min = 100;
             iter.max = 10000;
             iter.step = 100;
@@ -503,6 +553,7 @@ function selectFract(f) {
             break;
         case 11: // mandelbrot gpu
         case 12: // julia GPU
+        case 14: // burning ship GPU
             iter.min = 1000;
             iter.max = 10000;
             iter.step = 1000;
@@ -563,20 +614,30 @@ function fractale(){
             mandelbrot();
             break;
         case 11:
-            mandelGPU();
+            mandelbrotGPU(xmin,xmax,ymin,ymax,nmax,cwidth,cheight);
+            document.getElementById('canvas').getContext('2d').drawImage(gpu.canvas, 0, 0);
             break;
         case 10:
             collatz();
             break;
         case 20:
-            collatzGPU();
+            collGPU(xmin,xmax,ymin,ymax,nmax,cwidth,cheight);
+            document.getElementById('canvas').getContext('2d').drawImage(gpu.canvas, 0, 0);
+            break;
+        case 13:
+            burnShip();
+            break;
+        case 14:
+            burningShipGPU(xmin,xmax,ymin,ymax,nmax,cwidth,cheight);
+            document.getElementById('canvas').getContext('2d').drawImage(gpu.canvas, 0, 0);
             break;
         case 2:
             julia(1);
             break;
         case 12:
             document.getElementById("juliacri").style="display:block;";
-            julGPU(cr,ci);
+            juliaGPU(xmin,xmax,ymin,ymax,nmax,cwidth,cheight,cr,ci);
+            document.getElementById('canvas').getContext('2d').drawImage(gpu.canvas, 0, 0);
             break;
         case 3:
             julia(2);
