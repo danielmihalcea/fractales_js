@@ -36,34 +36,6 @@ function coord(x, w, c) { // x[x, y], w[xmin, xmax, ymin, ymax], c[cwidth, cheig
 const gpu = new GPU();
 gpu.addFunction(coord/*,{precision:'single', tactic:'precision'}*/);
 
-var mandelbrotGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,cheight) {
-    let x = [0,0];
-    x = coord([this.thread.x, this.thread.y], [xmin, xmax, ymin, ymax], [cwidth, cheight]);
-    let cx = x[0];
-    let cy = x[1];
-    let x1 = cx;
-    let y1 = cy;
-    let out = false;
-    let i = 0;
-    for(;i<nmax;i++){
-                let xx = x1**2;
-                let yy = y1**2;
-                if (xx+yy>4){out=true;break;}
-                y1 = 2*x1*y1+cy;
-                x1 = xx-yy+cx;
-            }
-    if (out){
-        this.color(Math.log10(i)/2, i*2/256, i/256);
-    } else {
-        this.color(0, 0, 0);
-    }
-})
-//   .setPrecision('single')
-//   .setTactic('precision')
-  .setLoopMaxIterations(10000)
-  .setOutput([cwidth, cheight])
-  .setGraphical(true);
-
 function mandelbrot(){
     var context,img,r,v,b,a=255;
     context = canvas.getContext("2d");
@@ -99,11 +71,11 @@ function mandelbrot(){
     context.putImageData(img, 0, 0);
 }
 
-var burningShipGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,cheight) {
+var mandelbrotGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,cheight) {
     let x = [0,0];
     x = coord([this.thread.x, this.thread.y], [xmin, xmax, ymin, ymax], [cwidth, cheight]);
     let cx = x[0];
-    let cy = -x[1];
+    let cy = x[1];
     let x1 = cx;
     let y1 = cy;
     let out = false;
@@ -112,7 +84,7 @@ var burningShipGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,c
                 let xx = x1**2;
                 let yy = y1**2;
                 if (xx+yy>4){out=true;break;}
-                y1 = Math.abs(2*x1*y1)+cy;
+                y1 = 2*x1*y1+cy;
                 x1 = xx-yy+cx;
             }
     if (out){
@@ -162,11 +134,11 @@ function burnShip(){
     context.putImageData(img, 0, 0);
 }
 
-var juliaGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,cheight,cr,ci) {
+var burningShipGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,cheight) {
     let x = [0,0];
     x = coord([this.thread.x, this.thread.y], [xmin, xmax, ymin, ymax], [cwidth, cheight]);
     let cx = x[0];
-    let cy = x[1];
+    let cy = -x[1];
     let x1 = cx;
     let y1 = cy;
     let out = false;
@@ -175,8 +147,8 @@ var juliaGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,cheight
                 let xx = x1**2;
                 let yy = y1**2;
                 if (xx+yy>4){out=true;break;}
-                y1 = 2*x1*y1+ci;
-                x1 = xx-yy+cr;
+                y1 = Math.abs(2*x1*y1)+cy;
+                x1 = xx-yy+cx;
             }
     if (out){
         this.color(Math.log10(i)/2, i*2/256, i/256);
@@ -238,7 +210,7 @@ function julia(n){
     context.putImageData(img, 0, 0);
 }
 
-var collGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,cheight) {
+var juliaGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,cheight,cr,ci) {
     let x = [0,0];
     x = coord([this.thread.x, this.thread.y], [xmin, xmax, ymin, ymax], [cwidth, cheight]);
     let cx = x[0];
@@ -247,22 +219,15 @@ var collGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,cheight)
     let y1 = cy;
     let out = false;
     let i = 0;
-    let norm=0;
-    for(;i<1000;i++){
-        let cosr = Math.cos(Math.PI*x1)*Math.cosh(Math.PI*y1);
-        let cosi = Math.sin(Math.PI*x1)*Math.sinh(Math.PI*y1);
-        let re = (2-(2+5*x1)*cosr+7*x1-5*y1*cosi)/4;
-        let im = ((2+5*x1)*cosi+7*y1-5*y1*cosr)/4;
-        x1 = re;
-        y1 = im;
-        norm = re*re+im*im;
-        if (norm>nmax){out=true;break;}
-    }
+    for(;i<nmax;i++){
+                let xx = x1**2;
+                let yy = y1**2;
+                if (xx+yy>4){out=true;break;}
+                y1 = 2*x1*y1+ci;
+                x1 = xx-yy+cr;
+            }
     if (out){
-        let b=i*60;
-        let v=(i-4)*80;
-        let r=(i-4)*10;
-        this.color(r/256, v/256, b/256);
+        this.color(Math.log10(i)/2, i*2/256, i/256);
     } else {
         this.color(0, 0, 0);
     }
@@ -309,6 +274,122 @@ function collatz() {
         }
     }
     context.putImageData(img, 0, 0);  
+}
+
+var collGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,cheight) {
+    let x = [0,0];
+    x = coord([this.thread.x, this.thread.y], [xmin, xmax, ymin, ymax], [cwidth, cheight]);
+    let cx = x[0];
+    let cy = x[1];
+    let x1 = cx;
+    let y1 = cy;
+    let out = false;
+    let i = 0;
+    let norm=0;
+    for(;i<1000;i++){
+        let cosr = Math.cos(Math.PI*x1)*Math.cosh(Math.PI*y1);
+        let cosi = Math.sin(Math.PI*x1)*Math.sinh(Math.PI*y1);
+        let re = (2-(2+5*x1)*cosr+7*x1-5*y1*cosi)/4;
+        let im = ((2+5*x1)*cosi+7*y1-5*y1*cosr)/4;
+        x1 = re;
+        y1 = im;
+        norm = re*re+im*im;
+        if (norm>nmax){out=true;break;}
+    }
+    if (out){
+        let b=i*60;
+        let v=(i-4)*80;
+        let r=(i-4)*10;
+        this.color(r/256, v/256, b/256);
+    } else {
+        this.color(0, 0, 0);
+    }
+})
+//   .setPrecision('single')
+//   .setTactic('precision')
+//   .setFixIntegerDivisionAccuracy(true)
+  .setLoopMaxIterations(10000)
+  .setOutput([cwidth, cheight])
+  .setGraphical(true);
+
+
+function add_c(a, b) {
+    return {r: a.r+b.r, i: a.i+b.i};
+}
+function sub_c(a, b) {
+    return {r: a.r-b.r, i: a.i-b.i};
+}
+function mul_c(a, b) {
+    return {r:a.r*b.r-a.i*b.i, i:a.r*b.i+a.i*b.r};
+}
+function div_c(a, b) {
+    let mod2 = mod2_c(b);
+    if (mod2 === 0) // division par zéro
+        return {r:0, i:0};
+    return {r:(a.r*b.r+a.i*b.i)/mod2, i:(a.i*b.r-a.r*b.i)/mod2};
+}
+function mod_c(a){
+    return Math.sqrt(a.r*a.r+a.i*a.i);
+}
+function mod2_c(a){
+    return a.r*a.r+a.i*a.i;
+}
+function newton () {
+    var context,img,r,v,b,a=255;
+    context = canvas.getContext("2d");
+    var xs = (xmax-xmin)/cwidth;
+    var ys = (ymax-ymin)/cheight;
+    var p1 = {r: 1,   i: 0},
+        p2 = {r: -.5, i: Math.sqrt(3)/2},
+        p3 = {r:-.5,  i: -Math.sqrt(3)/2};
+    var threshold = .001;
+    img = context.createImageData(cwidth,cheight);
+    for (var y=0,j=0;y<cheight;y++){
+        var cy = ymax - y*ys;
+        for (var x=0;x<cwidth;x++){
+            var cx = xmin + x*xs;
+            var z0r = cx;
+            var z0i = cy;
+            var z = {r:cx, i:cy};
+            var d1 = mod_c(p1);
+            var d2 = mod_c(p2);
+            var d3 = mod_c(p3);
+            var dmin=Math.min(Math.min(d1,d2),d3)
+            // nmax = 1000;
+            for(var i=0;i<nmax&&dmin>threshold;i++){
+                let num = mul_c(mul_c(sub_c(z, p1),sub_c(z, p2)), sub_c(z, p3));
+                let den = add_c(add_c(mul_c(sub_c(z, p2), sub_c(z, p3)), mul_c(sub_c(z, p1), sub_c(z, p3))), mul_c(sub_c(z, p1), sub_c(z, p2)));
+                z = sub_c(z, div_c(num, den));
+                d1 = mod_c(sub_c(z, p1));
+                d2 = mod_c(sub_c(z, p2));
+                d3 = mod_c(sub_c(z, p3));
+                dmin=Math.min(Math.min(d1,d2),d3)
+            }
+            let coul = 153 + 102*Math.cos(.25* (i - Math.log2(Math.log(dmin) / Math.log(threshold))));
+            // let coul = 153 + 102*Math.cos(.25*i);
+            // let coul = 153 + 10*i;
+            if (i === nmax){
+                r=v=b=0;
+            } else if (d1<d2 && d1<d3) {
+                r=coul;
+                v=0;
+                b=.3*coul;
+            } else if (d2<d1 && d2<d3) {
+                r=0;
+                v=coul;
+                b=.3*coul;
+            } else {
+                r=0;
+                v=.3*coul;
+                b=coul;
+            }
+            img.data[j++] = r;
+            img.data[j++] = v;
+            img.data[j++] = b;
+            img.data[j++] = a;
+        }
+    }
+    context.putImageData(img, 0, 0);
 }
 
 var cosa = Math.cos(Math.PI/3);
@@ -482,12 +563,12 @@ function heightway(){
     dragon(3,0,1,0,0,context);
 }
 
-function rotate(M, O, angle) {
-    var xM, yM, x, y;
+function rotate(M, O, angle, h=.67) {
+    var xM, yM, x, y, h;
     angle *= Math.PI / 180;
     xM = M.x - O.x;
     yM = M.y - O.y;
-    xM *= .67;yM *= .67;
+    xM *= h;yM *= h;
     x = xM * Math.cos (angle) + yM * Math.sin (angle) + O.x;
     y = - xM * Math.sin (angle) + yM * Math.cos (angle) + O.y;
     return ({x:Math.round (x), y:Math.round (y)});
@@ -524,6 +605,39 @@ function branch(x0, y0, x1, y1, i, ctx) {
     branch(x1, y1, b2.x, b2.y, i, ctx);
 }
 
+function fern() {
+    let ctx = canvas.getContext("2d");
+    ctx.strokeStyle = "brown";
+    ctx.lineJoin = "bevel";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    let x1 = 0, y1 = -1, x2 = 0, y2 = -.3;
+    let xs = cwidth/(xmax-xmin);
+    let ys = cheight/(ymax-ymin);
+    let xa = (x1-xmin)*xs;
+    let ya = (-y1+ymax)*ys;
+    let xb = (x2-xmin)*xs;
+    let yb = (-y2+ymax)*ys;
+    leaf(xa, ya, xb, yb, 0, ctx);
+}
+
+function leaf(x0, y0, x1, y1, i, ctx) {
+    if ((i++>nmax) || (i>11)) return;
+    if (i>1) ctx.strokeStyle = "Green";
+    else ctx.strokeStyle = "SaddleBrown";
+    ctx.beginPath();
+    ctx.moveTo(x0,y0);
+    ctx.lineTo(x1,y1);
+    ctx.lineWidth = 9-i;
+    ctx.stroke();
+    let b1 = rotate({x:x0, y:y0}, {x:x1, y:y1}, -118,.35)
+    let b2 = rotate({x:x0, y:y0}, {x:x1, y:y1}, 108,.25)
+    let b3 = rotate({x:x0, y:y0}, {x:x1, y:y1}, 175,.85)
+    leaf(x1, y1, b1.x, b1.y, i, ctx);
+    leaf(x1, y1, b2.x, b2.y, i, ctx);
+    leaf(x1, y1, b3.x, b3.y, i, ctx);
+}
+
 function draw(){
     cwidth = canvas.width = canvas.offsetWidth;
     cheight = canvas.height = canvas.offsetHeight;
@@ -546,6 +660,7 @@ function selectFract(f) {
         case 3: // julia 2
         case 4: // julia 3
         case 13: // burning ship
+        case 16: // newton
             iter.min = 100;
             iter.max = 10000;
             iter.step = 100;
@@ -554,6 +669,7 @@ function selectFract(f) {
         case 11: // mandelbrot gpu
         case 12: // julia GPU
         case 14: // burning ship GPU
+        case 17: // newton GPU
             iter.min = 1000;
             iter.max = 10000;
             iter.step = 1000;
@@ -601,6 +717,12 @@ function selectFract(f) {
             iter.step = 1;
             iter.value = 14;
             break;
+        case 15: // fern
+            iter.min = 0;
+            iter.max = 12;
+            iter.step = 1;
+            iter.value = 10;
+            break;
     }
     nmax = parseInt(iter.value);
     document.getElementById("formiter2").value = iter.value;
@@ -634,6 +756,11 @@ function fractale(){
         case 2:
             julia(1);
             break;
+        case 16:
+            newton();
+            break;
+        case 17:
+            break;
         case 12:
             document.getElementById("juliacri").style="display:block;";
             juliaGPU(xmin,xmax,ymin,ymax,nmax,cwidth,cheight,cr,ci);
@@ -659,6 +786,9 @@ function fractale(){
             break;
         case 9:
             tree();
+            break;
+        case 15:
+            fern();
             break;
     }
 }
