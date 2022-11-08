@@ -15,7 +15,7 @@ var frct = 11;
 var cr = 0.28;
 var ci = 0.01;
 
-var d0,d1;
+var t0,t1;
 
 var coul=[];
 
@@ -34,7 +34,13 @@ function coord(x, w, c) { // x[x, y], w[xmin, xmax, ymin, ymax], c[cwidth, cheig
 }
 
 const gpu = new GPU();
-gpu.addFunction(coord/*,{precision:'single', tactic:'precision'}*/);
+gpu.addFunction(coord);
+gpu.addFunction(mod_cc);
+gpu.addFunction(mod2_cc);
+gpu.addFunction(add_cc);
+gpu.addFunction(sub_cc);
+gpu.addFunction(mul_cc);
+gpu.addFunction(div_cc);
 
 function mandelbrot(){
     var context,img,r,v,b,a=255;
@@ -335,50 +341,49 @@ function mod2_c(a){
     return a.r*a.r+a.i*a.i;
 }
 function newton () {
-    var context,img,r,v,b,a=255;
+    let context,img,r,v,b,a=255;
     context = canvas.getContext("2d");
-    var xs = (xmax-xmin)/cwidth;
-    var ys = (ymax-ymin)/cheight;
-    var p1 = {r: 1,   i: 0},
+    let xs = (xmax-xmin)/cwidth;
+    let ys = (ymax-ymin)/cheight;
+    let p1 = {r: 1,   i: 0}, // les 3 racines
         p2 = {r: -.5, i: Math.sqrt(3)/2},
         p3 = {r:-.5,  i: -Math.sqrt(3)/2};
-    var threshold = .001;
+        let threshold = .001;
     img = context.createImageData(cwidth,cheight);
-    for (var y=0,j=0;y<cheight;y++){
-        var cy = ymax - y*ys;
-        for (var x=0;x<cwidth;x++){
-            var cx = xmin + x*xs;
-            var z0r = cx;
-            var z0i = cy;
-            var z = {r:cx, i:cy};
-            var d1 = mod_c(p1);
-            var d2 = mod_c(p2);
-            var d3 = mod_c(p3);
-            var dmin=Math.min(Math.min(d1,d2),d3)
-            // nmax = 1000;
-            for(var i=0;i<nmax&&dmin>threshold;i++){
+    for (let y=0,j=0;y<cheight;y++){
+        let cy = ymax - y*ys;
+        for (let x=0;x<cwidth;x++){
+            let cx = xmin + x*xs;
+            let z = {r:cx, i:cy};
+            let d1 = mod_c(p1);
+            let d2 = mod_c(p2);
+            let d3 = mod_c(p3);
+            let dmin = Math.min(Math.min(d1,d2),d3);
+            // nmax = 100;
+            let i=0;
+            for(;i<nmax && dmin>threshold;i++){
                 let num = mul_c(mul_c(sub_c(z, p1),sub_c(z, p2)), sub_c(z, p3));
                 let den = add_c(add_c(mul_c(sub_c(z, p2), sub_c(z, p3)), mul_c(sub_c(z, p1), sub_c(z, p3))), mul_c(sub_c(z, p1), sub_c(z, p2)));
                 z = sub_c(z, div_c(num, den));
                 d1 = mod_c(sub_c(z, p1));
                 d2 = mod_c(sub_c(z, p2));
                 d3 = mod_c(sub_c(z, p3));
-                dmin=Math.min(Math.min(d1,d2),d3)
+                dmin = Math.min(Math.min(d1,d2),d3);
             }
             let coul = 153 + 102*Math.cos(.25* (i - Math.log2(Math.log(dmin) / Math.log(threshold))));
             // let coul = 153 + 102*Math.cos(.25*i);
             // let coul = 153 + 10*i;
             if (i === nmax){
                 r=v=b=0;
-            } else if (d1<d2 && d1<d3) {
+            } else if (d1<d2 && d1<d3) { // on converge vers d1
                 r=coul;
                 v=0;
                 b=.3*coul;
-            } else if (d2<d1 && d2<d3) {
+            } else if (d2<d1 && d2<d3) { // on converge vers d2
                 r=0;
                 v=coul;
                 b=.3*coul;
-            } else {
+            } else { // on converge vers d3
                 r=0;
                 v=.3*coul;
                 b=coul;
@@ -391,6 +396,74 @@ function newton () {
     }
     context.putImageData(img, 0, 0);
 }
+
+function mod_cc(a){
+    return Math.sqrt(a[0]*a[0]+a[1]*a[1]);
+}
+function mod2_cc(a){
+    return a[0]*a[0]+a[1]*a[1];
+}
+function add_cc(a, b) {
+    return [a[0]+b[0], a[1]+b[1]];
+}
+function sub_cc(a, b) {
+    return [a[0]-b[0], a[1]-b[1]];
+}
+function mul_cc(a, b) {
+    return [a[0]*b[0]-a[1]*b[1], a[0]*b[1]+a[1]*b[0]];
+}
+function div_cc(a, b) {
+    let mod2 = mod2_cc(b);
+    if (mod2 === 0) // division par zéro
+        return [0, 0];
+    return [(a[0]*b[0]+a[1]*b[1])/mod2, (a[1]*b[0]-a[0]*b[1])/mod2];
+}
+var newtonGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,cheight) {
+    let x = [0,0];
+    x = coord([this.thread.x, this.thread.y], [xmin, xmax, ymin, ymax], [cwidth, cheight]);
+    let z = [x[0], x[1]];
+    let p1 = [1,   0], // les 3 racines
+        p2 = [-.5, Math.sqrt(3)/2],
+        p3 = [-.5, -Math.sqrt(3)/2];
+    let threshold = .001;
+    let d1 = mod_cc(p1);
+    let d2 = mod_cc(p2);
+    let d3 = mod_cc(p3);
+    let dmin = Math.min(Math.min(d1,d2),d3)
+    let i = 0;
+    for(;i<nmax && dmin>threshold;i++){
+        let num = mul_cc(mul_cc(sub_cc(z, p1),sub_cc(z, p2)), sub_cc(z, p3));
+        let den = add_cc(add_cc(mul_cc(sub_cc(z, p2), sub_cc(z, p3)), mul_cc(sub_cc(z, p1), sub_cc(z, p3))), mul_cc(sub_cc(z, p1), sub_cc(z, p2)));
+        z = sub_cc(z, div_cc(num, den));
+        d1 = mod_cc(sub_cc(z, p1));
+        d2 = mod_cc(sub_cc(z, p2));
+        d3 = mod_cc(sub_cc(z, p3));
+        dmin = Math.min(Math.min(d1,d2),d3);
+    }
+    let vc = .24*(Math.log2(Math.log(dmin) / Math.log(threshold)));
+    let coul = .6 + .4*Math.cos(.25*i-vc);
+    if (i===nmax){
+        this.color(0, 1, 0);
+    } else {
+        let r=0, v=0, b=0;
+        if (d1<d2 && d1<d3) { // on converge vers d1
+            r=coul;
+            b=.3*coul;
+        } else if (d2<d1 && d2<d3) { // on converge vers d2
+            v=coul;
+            b=.3*coul;
+        } else { // on converge vers d3
+            v=.3*coul;
+            b=coul;
+        }
+        this.color(r, v, b);
+    }
+})
+//   .setPrecision('single')
+//   .setTactic('precision')
+.setLoopMaxIterations(10000)
+.setOutput([cwidth, cheight])
+.setGraphical(true);
 
 var cosa = Math.cos(Math.PI/3);
 var sina = Math.sin(Math.PI/3);
@@ -641,12 +714,10 @@ function leaf(x0, y0, x1, y1, i, ctx) {
 function draw(){
     cwidth = canvas.width = canvas.offsetWidth;
     cheight = canvas.height = canvas.offsetHeight;
-    let ctx = canvas.getContext("2d");
-    d0 = performance.now();
-    window.requestAnimationFrame(fractale)
+    t0 = performance.now();
     fractale();
-    d1 = performance.now();
-    let d = (d1-d0)/1000; // durée d'execution en secondes
+    t1 = performance.now();
+    let d = (t1-t0)/1000; // durée d'execution en secondes
     document.getElementById("disp").innerHTML = "temps de calcul :<br>"+d.toFixed(5)+" sec";
 }
 
@@ -760,6 +831,8 @@ function fractale(){
             newton();
             break;
         case 17:
+            newtonGPU(xmin,xmax,ymin,ymax,nmax,cwidth,cheight);
+            document.getElementById('canvas').getContext('2d').drawImage(gpu.canvas, 0, 0);
             break;
         case 12:
             document.getElementById("juliacri").style="display:block;";
