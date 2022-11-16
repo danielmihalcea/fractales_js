@@ -43,21 +43,23 @@ gpu.addFunction(mul_cc);
 gpu.addFunction(div_cc);
 
 function mandelbrot(){
-    var context,img,r,v,b,a=255;
+    let context,img,r,v,b,a=255;
     context = canvas.getContext("2d");
-    var xs = (xmax-xmin)/cwidth;
-    var ys = (ymax-ymin)/cheight;
+    let xs = (xmax-xmin)/cwidth;
+    let ys = (ymax-ymin)/cheight;
     img = context.createImageData(cwidth,cheight);
-    for (var y=0,j=0;y<cheight;y++){
-        var cy = ymax - y*ys;
-        for (var x=0;x<cwidth;x++){
-            var cx = xmin + x*xs;
-            var x1 = cx;
-            var y1 = cy;
-            for(var i=0;i<nmax;i++){
-                var xx = x1**2;
-                var yy = y1**2;
-                if (xx+yy>l){break;}
+    for (let y=0,j=0;y<cheight;y++){
+        let cy = ymax - y*ys;
+        for (let x=0;x<cwidth;x++){
+            let cx = xmin + x*xs;
+            let x1 = cx;
+            let y1 = cy;
+            let xx = x1**2;
+            let yy = y1**2;
+            let i = 0;
+            for(;i<nmax && xx+yy<=l;i++){
+                xx = x1**2;
+                yy = y1**2;
                 y1 = 2*x1*y1+cy;
                 x1 = xx-yy+cx;
             }
@@ -84,16 +86,16 @@ var mandelbrotGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,ch
     let cy = x[1];
     let x1 = cx;
     let y1 = cy;
-    let out = false;
+    let xx = x1**2;
+    let yy = y1**2;
     let i = 0;
-    for(;i<nmax;i++){
-                let xx = x1**2;
-                let yy = y1**2;
-                if (xx+yy>4){out=true;break;}
+    for(;i<nmax && xx+yy<=4;i++){
+                xx = x1**2;
+                yy = y1**2;
                 y1 = 2*x1*y1+cy;
                 x1 = xx-yy+cx;
             }
-    if (out){
+    if (i !== nmax){
         this.color(Math.log10(i)/2, i*2/256, i/256);
     } else {
         this.color(0, 0, 0);
@@ -106,20 +108,20 @@ var mandelbrotGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,ch
   .setGraphical(true);
 
 function burnShip(){
-    var context,img,r,v,b,a=255;
+    let context,img,r,v,b,a=255;
     context = canvas.getContext("2d");
-    var xs = (xmax-xmin)/cwidth;
-    var ys = (ymax-ymin)/cheight;
+    let xs = (xmax-xmin)/cwidth;
+    let ys = (ymax-ymin)/cheight;
     img = context.createImageData(cwidth,cheight);
-    for (var y=0,j=0;y<cheight;y++){
-        var cy = y*ys - ymax; // invert y axis to see the ship
-        for (var x=0;x<cwidth;x++){
-            var cx = xmin + x*xs;
-            var x1 = cx;
-            var y1 = cy;
-            for(var i=0;i<nmax;i++){
-                var xx = x1**2;
-                var yy = y1**2;
+    for (let y=0,j=0;y<cheight;y++){
+        let cy = y*ys - ymax; // invert y axis to see the ship
+        for (let x=0;x<cwidth;x++){
+            let cx = xmin + x*xs;
+            let x1 = cx;
+            let y1 = cy;
+            for(let i=0;i<nmax;i++){
+                let xx = x1**2;
+                let yy = y1**2;
                 if (xx+yy>l){break;}
                 y1 = Math.abs(2*x1*y1)+cy;
                 x1 = xx-yy+cx;
@@ -245,33 +247,37 @@ var juliaGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,cheight
   .setGraphical(true);
 
 function collatz() {
-    var context,img,r,v,b,a=255;
+    let context,img,r,v,b,a=255;
     context = canvas.getContext("2d");
-    var xs = (xmax-xmin)/cwidth;
-    var ys = (ymax-ymin)/cheight;
+    let xs = (xmax-xmin)/cwidth;
+    let ys = (ymax-ymin)/cheight;
     img = context.createImageData(cwidth,cheight);
-    for (var y=0,j=0;y<cheight;y++){
-        var cy = ymax - y*ys;
-        for (var x=0;x<cwidth;x++){
-            var cx = xmin + x*xs;
-            var x1 = cx;
-            var y1 = cy;
-            for(var i=0;i<nmax;i++){
+    for (let y=0,j=0;y<cheight;y++){
+        let cy = ymax - y*ys;
+        for (let x=0;x<cwidth;x++){
+            let cx = xmin + x*xs;
+            let x1 = cx;
+            let y1 = cy;
+            let i=0
+            let norm = 0;
+            for(;i<nmax && norm<10000;i++){
                 let cosr = Math.cos(Math.PI*x1)*Math.cosh(Math.PI*y1);
                 let cosi = Math.sin(Math.PI*x1)*Math.sinh(Math.PI*y1);
                 let re = (2-(2+5*x1)*cosr+7*x1-5*y1*cosi)/4;
                 let im = ((2+5*x1)*cosi+7*y1-5*y1*cosr)/4;
+                // let re = (1-(1+2*x1)*cosr+4*x1-2*y1*cosi)/4;
+                // let im = ((1+2*x1)*cosi+4*y1-2*y1*cosr)/4;
                 x1 = re;
                 y1 = im;
-                if (re*re+im*im>10000){break;}
+                norm = re*re+im*im;
+                // if (){break;}
             }
             if (i === nmax){
                 r=v=b=0;
             } else {
-                b=i*60;//coul[i]*2;
+                b=i*60;
                 v=(i-4)*80;
                 r=(i-4)*10;
-                // r=v=b=i*10;
             }
             img.data[j++] = r;
             img.data[j++] = v;
@@ -289,10 +295,9 @@ var collGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,cheight)
     let cy = x[1];
     let x1 = cx;
     let y1 = cy;
-    let out = false;
     let i = 0;
     let norm=0;
-    for(;i<1000;i++){
+    for(;i<nmax && norm<10000;i++){
         let cosr = Math.cos(Math.PI*x1)*Math.cosh(Math.PI*y1);
         let cosi = Math.sin(Math.PI*x1)*Math.sinh(Math.PI*y1);
         let re = (2-(2+5*x1)*cosr+7*x1-5*y1*cosi)/4;
@@ -300,15 +305,48 @@ var collGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,cheight)
         x1 = re;
         y1 = im;
         norm = re*re+im*im;
-        if (norm>nmax){out=true;break;}
     }
-    if (out){
-        let b=i*60;
-        let v=(i-4)*80;
-        let r=(i-4)*10;
-        this.color(r/256, v/256, b/256);
-    } else {
+    if (i === nmax){
         this.color(0, 0, 0);
+    } else {
+        let b=.234*i;
+        let v=.313*(i-4);
+        let r=.039*(i-4);
+        this.color(r, v, b);        
+    }
+})
+//   .setPrecision('single')
+//   .setTactic('precision')
+//   .setFixIntegerDivisionAccuracy(true)
+  .setLoopMaxIterations(10000)
+  .setOutput([cwidth, cheight])
+  .setGraphical(true);
+
+var coll2GPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,cheight) {
+    let x = [0,0];
+    x = coord([this.thread.x, this.thread.y], [xmin, xmax, ymin, ymax], [cwidth, cheight]);
+    let cx = x[0];
+    let cy = x[1];
+    let x1 = cx;
+    let y1 = cy;
+    let i = 0;
+    let norm=0;
+    for(;i<nmax && norm<10000;i++){
+        let cosr = Math.cos(Math.PI*x1)*Math.cosh(Math.PI*y1);
+        let cosi = Math.sin(Math.PI*x1)*Math.sinh(Math.PI*y1);
+        let re = (1-(1+2*x1)*cosr+4*x1-2*y1*cosi)/4;
+        let im = ((1+2*x1)*cosi+4*y1-2*y1*cosr)/4;
+        x1 = re;
+        y1 = im;
+        norm = re*re+im*im;
+    }
+    if (i === nmax){
+        this.color(0, 0, 0);
+    } else {
+        let b=.234*i;
+        let v=.313*(i-4);
+        let r=.039*(i-4);
+        this.color(r, v, b);        
     }
 })
 //   .setPrecision('single')
@@ -737,7 +775,7 @@ function selectFract(f) {
             iter.step = 100;
             iter.value = 1000;
             break;
-        case 11: // mandelbrot gpu
+        case 11: // mandelbrot GPU
         case 12: // julia GPU
         case 14: // burning ship GPU
         case 17: // newton GPU
@@ -752,11 +790,12 @@ function selectFract(f) {
             iter.step = 10;
             iter.value = 100;
             break;
-        case 20: // Collatz
+        case 20: // Collatz GPU
+        case 21: // Collatz 2 GPU
             iter.min = 10;
-            iter.max = 10000;
+            iter.max = 1000;
             iter.step = 10;
-            iter.value = 10000;
+            iter.value = 100;
             break;
         case 5: // Koch 1
             iter.min = 0;
@@ -815,6 +854,10 @@ function fractale(){
             break;
         case 20:
             collGPU(xmin,xmax,ymin,ymax,nmax,cwidth,cheight);
+            document.getElementById('canvas').getContext('2d').drawImage(gpu.canvas, 0, 0);
+            break;
+        case 21:
+            coll2GPU(xmin,xmax,ymin,ymax,nmax,cwidth,cheight);
             document.getElementById('canvas').getContext('2d').drawImage(gpu.canvas, 0, 0);
             break;
         case 13:
@@ -899,14 +942,14 @@ function handle(delta) {
     draw();
 }
 function setZoom(f) {
-    var dx = xmax-xmin;
-    var dy = ymax-ymin;
-    var xs = (xmax-xmin)/cwidth;
-    var ys = (ymax-ymin)/cheight;
-    var x = parseInt(m_x);
-    var y = parseInt(m_y);
-    var cx = xmin + x*xs;
-    var cy = ymax - y*ys;
+    let dx = xmax-xmin;
+    let dy = ymax-ymin;
+    let xs = (xmax-xmin)/cwidth;
+    let ys = (ymax-ymin)/cheight;
+    let x = parseInt(m_x);
+    let y = parseInt(m_y);
+    let cx = xmin + x*xs;
+    let cy = ymax - y*ys;
     dx/=f;
     dy/=f;
     xmin = cx - dx/2;document.getElementById("formxmin").value=xmin;
@@ -957,46 +1000,48 @@ function begin(e){
 function move(e){
     e.preventDefault();
     if (!mov) return;
-    var xs=(xmax-xmin)/cwidth;
-    var ys=(ymax-ymin)/cheight;
+    let xs=(xmax-xmin)/cwidth;
+    let ys=(ymax-ymin)/cheight;
     m_x = e.pageX || e.targetTouches[0].pageX;
     m_y = e.pageY || e.targetTouches[0].pageY;
-    var mx=m_x-m_x0;
-    var my=m_y-m_y0;
-    var cx=- mx*xs;
-    var cy=my*ys;
+    let mx=m_x-m_x0;
+    let my=m_y-m_y0;
+    let cx=- mx*xs;
+    let cy=my*ys;
     document.getElementById("formxmin").value=xmin+cx;
     document.getElementById("formxmax").value=xmax+cx;
     document.getElementById("formymin").value=ymin+cy;
     document.getElementById("formymax").value=ymax+cy;
     context.clearRect(0,0,cwidth,cheight);
-    context.putImageData(img,mx,my);
-    if (e.targetTouches && e.targetTouches.length === 2) {
+    if (nbTouch < 2) {
+        context.putImageData(img,mx,my);
+    } else if (e.targetTouches && e.targetTouches.length === 2) {
+        context.putImageData(img,mx/deltaZoom1,my/deltaZoom1);
         deltaZoom1 = deltaZoom(e)/deltaZoom0;
-        context.drawImage(canvas,0,0,cwidth,cheight,mx,my,cwidth*deltaZoom1,cheight*deltaZoom1);
+        context.drawImage(canvas,0,0,cwidth,cheight,mx*deltaZoom1*0,my*deltaZoom1*0,cwidth*deltaZoom1,cheight*deltaZoom1);
     }
 }
 function end(){
     if (nbTouch === 0) return;
     if (nbTouch === 2) nbTouch = 0;
     mov=false;
-    var xs = (xmax-xmin)/cwidth;
-    var ys = (ymax-ymin)/cheight;
-    var mx = m_x-m_x0;
-    var my = m_y-m_y0;
-    var cx = - mx*xs;
-    var cy = my*ys;
+    let xs = (xmax-xmin)/cwidth;
+    let ys = (ymax-ymin)/cheight;
+    let mx = m_x-m_x0;
+    let my = m_y-m_y0;
+    let cx = - mx*xs;
+    let cy = my*ys;
     if (deltaZoom1 != 1) {
-        m_x = cwidth/2+mx;
-        m_y = cheight/2+my;
+        m_x = cwidth/2-mx;
+        m_y = cheight/2-my;
         setZoom(deltaZoom1);
+        deltaZoom1 = 1;
+    } else {
+        xmin+=cx;document.getElementById("formxmin").value=xmin;
+        xmax+=cx;document.getElementById("formxmax").value=xmax;
+        ymin+=cy;document.getElementById("formymin").value=ymin;
+        ymax+=cy;document.getElementById("formymax").value=ymax;    
     }
-    // canvas.style.transform = "scale(1)";
-    deltaZoom1 = 1;
-    xmin+=cx;document.getElementById("formxmin").value=xmin;
-    xmax+=cx;document.getElementById("formxmax").value=xmax;
-    ymin+=cy;document.getElementById("formymin").value=ymin;
-    ymax+=cy;document.getElementById("formymax").value=ymax;
     draw();
 }
 
