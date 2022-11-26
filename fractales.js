@@ -119,7 +119,8 @@ function burnShip(){
             let cx = xmin + x*xs;
             let x1 = cx;
             let y1 = cy;
-            for(let i=0;i<nmax;i++){
+            let i=0;
+            for(;i<nmax;i++){
                 let xx = x1**2;
                 let yy = y1**2;
                 if (xx+yy>l){break;}
