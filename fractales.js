@@ -171,15 +171,15 @@ var burningShipGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,c
   .setGraphical(true);
 
 function julia(n){
-    var context,img,r,v,b,a=255;
+    let context,img,r,v,b,a=255;
     context = canvas.getContext("2d");
     img = context.createImageData(cwidth,cheight);
-    var xs = (xmax-xmin)/cwidth;
-    var ys = (ymax-ymin)/cheight;
-    for (var y=0,j=0;y<cheight;y++){
-        var cy = ymax - y*ys;
-        for (var x=0;x<cwidth;x++){
-            var cr,ci;
+    let xs = (xmax-xmin)/cwidth;
+    let ys = (ymax-ymin)/cheight;
+    for (let y=0,j=0;y<cheight;y++){
+        let cy = ymax - y*ys;
+        for (let x=0;x<cwidth;x++){
+            let cr,ci;
             if (n === 1) {
                 cr = 0.285;
                 ci = 0.01;
@@ -190,12 +190,13 @@ function julia(n){
                 cr = -0.15;
                 ci = 1.03;
             }
-            var cx = xmin + x*xs;
-            var x1 = cx;
-            var y1 = cy;
-            for(var i=0;i<nmax;i++){
-                var xx = x1**2;
-                var yy = y1**2;
+            let cx = xmin + x*xs;
+            let x1 = cx;
+            let y1 = cy;
+            let i=0
+            for(;i<nmax;i++){
+                let xx = x1**2;
+                let yy = y1**2;
                 if (xx+yy>l){break;}
                 y1 = 2*x1*y1+ci;
                 x1 = xx-yy+cr;
@@ -507,12 +508,12 @@ var cosa = Math.cos(Math.PI/3);
 var sina = Math.sin(Math.PI/3);
 function koch(x1,y1,x2,y2,i,ctx){
     if ((i>=nmax)||(i>=9)){
-        var xs = cwidth/(xmax-xmin);
-        var ys = cheight/(ymax-ymin);
-        var xa = (x1-xmin)*xs;
-        var ya = (-y1+ymax)*ys;
-        var xb = (x2-xmin)*xs;
-        var yb = (-y2+ymax)*ys;
+        let xs = cwidth/(xmax-xmin);
+        let ys = cheight/(ymax-ymin);
+        let xa = (x1-xmin)*xs;
+        let ya = (-y1+ymax)*ys;
+        let xb = (x2-xmin)*xs;
+        let yb = (-y2+ymax)*ys;
         ctx.lineJoin = "bevel";
         ctx.lineWidth = 1;
         ctx.beginPath();
@@ -520,13 +521,12 @@ function koch(x1,y1,x2,y2,i,ctx){
         ctx.lineTo(xb,yb);
         ctx.stroke();
     }else{
-        var xa,ya,xb,yb,xc,yc;
-        xa = x1+(x2-x1)/3;
-        ya = y1+(y2-y1)/3;
-        xc = x1+2*(x2-x1)/3;
-        yc = y1+2*(y2-y1)/3;
-        xb = cosa*(xc-xa) - sina*(yc-ya) + xa;
-        yb = sina*(xc-xa) + cosa*(yc-ya) + ya;
+        let xa = x1+(x2-x1)/3;
+        let ya = y1+(y2-y1)/3;
+        let xc = x1+2*(x2-x1)/3;
+        let yc = y1+2*(y2-y1)/3;
+        let xb = cosa*(xc-xa) - sina*(yc-ya) + xa;
+        let yb = sina*(xc-xa) + cosa*(yc-ya) + ya;
         i++;
         koch(x1,y1,xa,ya,i,ctx);
         koch(xa,ya,xb,yb,i,ctx);
@@ -546,12 +546,12 @@ function vankoch(){
 
 function koch2(x1,y1,x2,y2,i,ctx){
     if ((i>=nmax)||(i>=5)){
-        var xs = cwidth/(xmax-xmin);
-        var ys = cheight/(ymax-ymin);
-        var xa = (x1-xmin)*xs;
-        var ya = (-y1+ymax)*ys;
-        var xb = (x2-xmin)*xs;
-        var yb = (-y2+ymax)*ys;
+        let xs = cwidth/(xmax-xmin);
+        let ys = cheight/(ymax-ymin);
+        let xa = (x1-xmin)*xs;
+        let ya = (-y1+ymax)*ys;
+        let xb = (x2-xmin)*xs;
+        let yb = (-y2+ymax)*ys;
         ctx.lineJoin = "bevel";
         ctx.lineWidth = 1;
         ctx.beginPath();
@@ -559,23 +559,22 @@ function koch2(x1,y1,x2,y2,i,ctx){
         ctx.lineTo(xb,yb);
         ctx.stroke();
     }else{
-        var xa,ya,xb,yb,xc,yc,xd,yd,xe,ye,xf,yf,xg,yg;
-        var xs = x2-x1;
-        var ys = y2-y1;
-        xa = x1+xs/4;
-        ya = y1+ys/4;
-        xd = x1+2*xs/4;
-        yd = y1+2*ys/4;
-        xg = x1+3*xs/4;
-        yg = y1+3*ys/4;
-        xb = xa-(yd-ya);
-        yb = ya+(xd-xa);
-        xc = xd-(yg-yd);
-        yc = yd+(xg-xd);
-        xe = xd-(xc-xd);
-        ye = yd-(yc-yd);
-        xf = xg-(yd-yg); 
-        yf = yg+(xd-xg);
+        let xs = x2-x1;
+        let ys = y2-y1;
+        let xa = x1+xs/4;
+        let ya = y1+ys/4;
+        let xd = x1+2*xs/4;
+        let yd = y1+2*ys/4;
+        let xg = x1+3*xs/4;
+        let yg = y1+3*ys/4;
+        let xb = xa-(yd-ya);
+        let yb = ya+(xd-xa);
+        let xc = xd-(yg-yd);
+        let yc = yd+(xg-xd);
+        let xe = xd-(xc-xd);
+        let ye = yd-(yc-yd);
+        let xf = xg-(yd-yg); 
+        let yf = yg+(xd-xg);
         i++;
         koch2(x1,y1,xa,ya,i,ctx);
         koch2(xa,ya,xb,yb,i,ctx);
@@ -600,14 +599,14 @@ function vankoch2(){
 
 function sierp(x1,y1,x2,y2,x3,y3,i,ctx){
     if ((i>=nmax)||(i>=12)){
-        var xs = cwidth/(xmax-xmin);
-        var ys = cheight/(ymax-ymin);
-        var xa = (x1-xmin)*xs;
-        var ya = (-y1+ymax)*ys;
-        var xb = (x2-xmin)*xs;
-        var yb = (-y2+ymax)*ys;
-        var xc = (x3-xmin)*xs;
-        var yc = (-y3+ymax)*ys;
+        let xs = cwidth/(xmax-xmin);
+        let ys = cheight/(ymax-ymin);
+        let xa = (x1-xmin)*xs;
+        let ya = (-y1+ymax)*ys;
+        let xb = (x2-xmin)*xs;
+        let yb = (-y2+ymax)*ys;
+        let xc = (x3-xmin)*xs;
+        let yc = (-y3+ymax)*ys;
         ctx.lineJoin = "bevel";
         ctx.lineWidth = 1;
         ctx.beginPath();
@@ -617,10 +616,10 @@ function sierp(x1,y1,x2,y2,x3,y3,i,ctx){
         ctx.closePath();
         ctx.fill();
     }else{
-        var a = x1+(x3-x1)/4;
-        var b = x1+2*(x3-x1)/4;
-        var c = x1+3*(x3-x1)/4;
-        var d = y1+(y2-y1)/2;
+        let a = x1+(x3-x1)/4;
+        let b = x1+2*(x3-x1)/4;
+        let c = x1+3*(x3-x1)/4;
+        let d = y1+(y2-y1)/2;
         i++;
         sierp(x1,y1,a,d,b,y1,i,ctx);
         sierp(a,d,x2,y2,c,d,i,ctx);
@@ -637,12 +636,12 @@ function sierpinski(){
 
 function dragon(x1,y1,x2,y2,i,ctx){
     if ((i>=nmax)||(i>=18)){
-        var xs = cwidth/(xmax-xmin);
-        var ys = cheight/(ymax-ymin);
-        var xa = (x1-xmin)*xs;
-        var ya = (-y1+ymax)*ys;
-        var xb = (x2-xmin)*xs;
-        var yb = (-y2+ymax)*ys;
+        let xs = cwidth/(xmax-xmin);
+        let ys = cheight/(ymax-ymin);
+        let xa = (x1-xmin)*xs;
+        let ya = (-y1+ymax)*ys;
+        let xb = (x2-xmin)*xs;
+        let yb = (-y2+ymax)*ys;
         ctx.lineJoin = "bevel";
         ctx.lineWidth = 1;
         ctx.beginPath();
@@ -650,10 +649,10 @@ function dragon(x1,y1,x2,y2,i,ctx){
         ctx.lineTo(xb,yb);
         ctx.stroke();
     }else{
-        var xs = x2-x1;
-        var ys = y2-y1;
-        var x = x1+xs/2;
-        var y = y1+ys/2;
+        let xs = x2-x1;
+        let ys = y2-y1;
+        let x = x1+xs/2;
+        let y = y1+ys/2;
         i++;
         x = (x2-x1)/2 + (y2-y1)/2 + x1;
         y = (y2-y1)/2 - (x2-x1)/2 + y1;
@@ -675,7 +674,7 @@ function heightway(){
 }
 
 function rotate(M, O, angle, h=.67) {
-    var xM, yM, x, y, h;
+    let xM, yM, x, y;
     angle *= Math.PI / 180;
     xM = M.x - O.x;
     yM = M.y - O.y;
@@ -911,9 +910,16 @@ function fractale(){
 
 var showParam = true;
 
-function toggleParam() {
-    if (showParam) document.getElementById("param").style.right="-250px";
-    else document.getElementById("param").style.right="0px";
+function toggleParam(a) {
+    if (showParam) {
+        document.getElementById("param").style.width="0px";
+        document.getElementById("param").style.padding="0px";
+        a.value="👈";
+    } else {
+        document.getElementById("param").style.width="230px";
+        document.getElementById("param").style.padding="10px";
+        a.value="👉";
+    }
     showParam = !showParam;
 }
 
@@ -925,9 +931,9 @@ function reinit(){
     draw();
 }
 function ratio(){
-    var dx = xmax-xmin;
-    var dy = dx*cheight/cwidth;
-    var y0 = (ymin+ymax)/2;
+    let dx = xmax-xmin;
+    let dy = dx*cheight/cwidth;
+    let y0 = (ymin+ymax)/2;
     ymin = y0-(dy/2);document.getElementById("formymin").value=ymin;
     ymax = y0+(dy/2);document.getElementById("formymax").value=ymax;
     draw();

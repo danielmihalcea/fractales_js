@@ -1,7 +1,10 @@
 html, body{width:100%;height:100%;overflow:hidden}
-body{margin:0;padding:0;background:#000;font-family:arial;font-size:16px;letter-spacing:1px;}
+body{margin:0;padding:0;background:#000;font-family:arial;font-size:1em;letter-spacing:1px;}
 /*body{margin:0px;}*/
 label{display:block;float:left;margin-right:16px;text-align:right;width:100px;}
 input{width:100px;}
 #canvas{background:#000;height:100%;width:100%;position:absolute;}
-#param{position:absolute;top:0px;right:0px;width:230px;padding:10px;background:black;color:white;font-weight:bold;opacity:.7;transition:1s;}
+#param{position:absolute;top:0px;right:0px;width:230px;padding:10px;background:black;color:white;font-weight:bold;opacity:.7;transition:1s;white-space:nowrap;}
+@media (min-resolution:220dpi){
+    #param{transform-origin:top right;transform: scale(2);}
+}
