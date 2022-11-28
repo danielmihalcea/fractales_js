@@ -11,6 +11,7 @@ var ymax = 1.2;
 
 var nmax = 1000;
 var l = 4;
+var rad = 2;
 var frct = 11;
 var cr = 0.28;
 var ci = 0.01;
@@ -57,6 +58,9 @@ function mandelbrot(){
             let xx = x1**2;
             let yy = y1**2;
             let i = 0;
+            let p = Math.sqrt((cx-.25)**2+cy**2); // speed optimisation
+            if (cx < p-2*p*p+.25) i = nmax; // skip the cardioid
+            if ((cx+1)**2+cy**2 < .0625) i = nmax; // skip first bulb
             for(;i<nmax && xx+yy<=l;i++){
                 xx = x1**2;
                 yy = y1**2;
@@ -95,6 +99,107 @@ var mandelbrotGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,ch
                 y1 = 2*x1*y1+cy;
                 x1 = xx-yy+cx;
             }
+    if (i !== nmax){
+        this.color(Math.log10(i)/2, i*2/256, i/256);
+    } else {
+        this.color(0, 0, 0);
+    }
+})
+//   .setPrecision('single')
+//   .setTactic('precision')
+  .setLoopMaxIterations(10000)
+  .setOutput([cwidth, cheight])
+  .setGraphical(true);
+
+  function mandelsinh(){
+    let context,img,r,v,b,a=255;
+    context = canvas.getContext("2d");
+    let xs = (xmax-xmin)/cwidth;
+    let ys = (ymax-ymin)/cheight;
+    img = context.createImageData(cwidth,cheight);
+    for (let y=0,j=0;y<cheight;y++){
+        let cy = ymax - y*ys;
+        for (let x=0;x<cwidth;x++){
+            let cx = xmin + x*xs;
+            let x1 = 1;
+            let y1 = .1;
+            let xx = x1**2;
+            let yy = y1**2;
+            let i = 0;
+            let ca = cx**2/(cx**2+cy**2)**2-cy**2/(cx**2+cy**2)**2;
+            let cb = -2*cx*cy/(cx**2+cy**2)**2;
+            for(;i<nmax && xx+yy<=40000;i++){
+                xx = x1**2;
+                yy = y1**2;
+                let yt = Math.cosh(x1)*Math.sin(y1)+ca;
+                x1 = Math.sinh(x1)*Math.cos(y1)+cb;
+                y1 = yt;
+            }
+            if (i === nmax){
+                r=v=b=0;
+            } else {
+                r=128-256*Math.sin(i);
+                v=i*26;
+                b=i*26;
+            }
+            img.data[j++] = r;
+            img.data[j++] = v;
+            img.data[j++] = b;
+            img.data[j++] = a;
+        }
+    }
+    context.putImageData(img, 0, 0);
+}
+
+var mandelsinhGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax,cwidth,cheight) {
+    let x = [0,0];
+    x = coord([this.thread.x, this.thread.y], [xmin, xmax, ymin, ymax], [cwidth, cheight]);
+    let cx = x[0];
+    let cy = x[1];
+    let x1 = 1;
+    let y1 = 0.1;
+    let xx = x1**2;
+    let yy = y1**2;
+    let i = 0;
+    let ca = cx**2/(cx**2+cy**2)**2-cy**2/(cx**2+cy**2)**2;
+    let cb = -2*cx*cy/(cx**2+cy**2)**2;
+    for(;i<nmax && xx+yy<=40000;i++){
+        xx = x1**2;
+        yy = y1**2;
+        let yt = Math.cosh(x1)*Math.sin(y1)+ca;
+        x1 = Math.sinh(x1)*Math.cos(y1)+cb;
+        y1 = yt;
+    }
+    if (i !== nmax){
+        this.color(0.5-Math.sin(i), i/10, i/10);
+        //this.color(i/10, i/10, i/10);
+    } else {
+        this.color(0, 0, 0);
+    }
+})
+//   .setPrecision('single')
+//   .setTactic('precision')
+  .setLoopMaxIterations(10000)
+  .setOutput([cwidth, cheight])
+  .setGraphical(true);
+
+var mandelGPU = gpu.createKernel(function(xmin,xmax,ymin,ymax,nmax, rad, cr, ci,cwidth,cheight) {
+    let x = [0,0];
+    x = coord([this.thread.x, this.thread.y], [xmin, xmax, ymin, ymax], [cwidth, cheight]);
+    let cx = x[0];
+    let cy = x[1];
+    let x1 = cr;
+    let y1 = ci;
+    let xx = x1**2;
+    let yy = y1**2;
+    let rad2 = rad**2;
+    let i = 0;
+    for(;i<nmax && xx+yy<=rad2;i++){
+        xx = x1**2;
+        yy = y1**2;
+        y1 = 2*x1*y1+cy;
+        x1 = xx-yy+cx;
+    }
     if (i !== nmax){
         this.color(Math.log10(i)/2, i*2/256, i/256);
     } else {
@@ -775,10 +880,19 @@ function selectFract(f) {
             iter.step = 100;
             iter.value = 1000;
             break;
+        case 18: // mandelsinh
+            iter.min = 10;
+            iter.max = 1000;
+            iter.step = 10;
+            iter.value = 100;
+            break;
+        case 22: // mandelbrot GPU parametrable
+            cr=ci=0;
         case 11: // mandelbrot GPU
         case 12: // julia GPU
         case 14: // burning ship GPU
         case 17: // newton GPU
+        case 19: // mandelsinh GPU
             iter.min = 1000;
             iter.max = 10000;
             iter.step = 1000;
@@ -840,6 +954,7 @@ function selectFract(f) {
 }
 function fractale(){
     document.getElementById("juliacri").style="display:none;";
+    document.getElementById("mandelp").style="display:none;";
     switch(frct){
         case 1:
         default:
@@ -847,6 +962,11 @@ function fractale(){
             break;
         case 11:
             mandelbrotGPU(xmin,xmax,ymin,ymax,nmax,cwidth,cheight);
+            document.getElementById('canvas').getContext('2d').drawImage(gpu.canvas, 0, 0);
+            break;
+        case 22:
+            document.getElementById("mandelp").style="display:block;";
+            mandelGPU(xmin,xmax,ymin,ymax,nmax,rad,cr,ci,cwidth,cheight);
             document.getElementById('canvas').getContext('2d').drawImage(gpu.canvas, 0, 0);
             break;
         case 10:
@@ -875,6 +995,13 @@ function fractale(){
             break;
         case 17:
             newtonGPU(xmin,xmax,ymin,ymax,nmax,cwidth,cheight);
+            document.getElementById('canvas').getContext('2d').drawImage(gpu.canvas, 0, 0);
+            break;
+        case 18:
+            mandelsinh();
+            break;
+        case 19:
+            mandelsinhGPU(xmin,xmax,ymin,ymax,nmax,cwidth,cheight);
             document.getElementById('canvas').getContext('2d').drawImage(gpu.canvas, 0, 0);
             break;
         case 12:

@@ -17,6 +17,7 @@
     <optgroup label="Mandelbrot">
         <option value="1">Vanila 🐌</option>
         <option value="11" selected>GPU ⚡</option>
+        <option value="22" selected>param ⚡</option>
     </optgroup>
     <optgroup label="Collatz">
         <option value="10">Vanila 🐌</option>
@@ -37,6 +38,10 @@
         <option value="16">Vanila 🐌</option>
         <option value="17">GPU ⚡</option>
     </optgroup>
+    <optgroup label="Mandelbrot sinh">
+        <option value="18">Vanila 🐌</option>
+        <option value="19">GPU ⚡</option>
+    </optgroup>
     <optgroup label="Géométrie">
         <option value="5">Koch 1 △</option>
         <option value="6">Koch 2 □</option>
@@ -52,15 +57,31 @@
 <label for="formiter2">&nbsp;</label><output id="formiter2" value="1000">1000</output>
 <br>
 <input id="formiter" type="range" min="1000" step="1000" max="10000" value="1000" oninput="document.getElementById('formiter2').value=document.getElementById('formiter').value;nmax=parseInt(this.value);calCoul();draw();">
+<div id="mandelp" style="display:none">
+    <label for="mandelcr">Cr</label>
+    <label for="mandelcr2">&nbsp;</label><output id="mandelcr2" value="0.00">0.00</output>
+    <br>
+    <input id="mandelcr" type="range" min="-1" step="0.01" max="1" value="0.00" oninput="document.getElementById('mandelcr2').value=document.getElementById('mandelcr').value;cr=parseFloat(this.value);calCoul();draw();">
+    <br>
+    <label for="mandelci">Ci</label>
+    <label for="mandelci2">&nbsp;</label><output id="mandelci2" value="0.00">0.00</output>
+    <br>
+    <input id="mandelci" type="range" min="-1" step="0.01" max="1" value="0.00" oninput="document.getElementById('mandelci2').value=document.getElementById('mandelci').value;ci=parseFloat(this.value);calCoul();draw();">
+    <br>
+    <label for="mandelrad">rayon</label>
+    <label for="mandelrad2">&nbsp;</label><output id="mandelrad2" value="2">2</output>
+    <br>
+    <input id="mandelrad" type="range" min="0" step="1" max="500" value="2" oninput="document.getElementById('mandelrad2').value=document.getElementById('mandelrad').value;rad=parseInt(this.value);calCoul();draw();">
+</div>
 <div id="juliacri" style="display:none">
-<label for="formcr">Cr</label>
-<label for="formcr2">&nbsp;</label><output id="formcr2" value="0.28">0.28</output>
-<br>
-<input id="formcr" type="range" min="-1" step="0.01" max="1" value="0.28" oninput="document.getElementById('formcr2').value=document.getElementById('formcr').value;cr=parseFloat(this.value);calCoul();draw();">
-<label for="formci">Ci</label>
-<label for="formci2">&nbsp;</label><output id="formci2" value="0.01">0.01</output>
-<br>
-<input id="formci" type="range" min="-1" step="0.01" max="1" value="0.01" oninput="document.getElementById('formci2').value=document.getElementById('formci').value;ci=parseFloat(this.value);calCoul();draw();">
+    <label for="formcr">Cr</label>
+    <label for="formcr2">&nbsp;</label><output id="formcr2" value="0.28">0.28</output>
+    <br>
+    <input id="formcr" type="range" min="-1" step="0.01" max="1" value="0.28" oninput="document.getElementById('formcr2').value=document.getElementById('formcr').value;cr=parseFloat(this.value);calCoul();draw();">
+    <label for="formci">Ci</label>
+    <label for="formci2">&nbsp;</label><output id="formci2" value="0.01">0.01</output>
+    <br>
+    <input id="formci" type="range" min="-1" step="0.01" max="1" value="0.01" oninput="document.getElementById('formci2').value=document.getElementById('formci').value;ci=parseFloat(this.value);calCoul();draw();">
 </div>
 <hr>
 fenêtre<br>
