@@ -34,7 +34,14 @@ function coord(x, w, c) { // x[x, y], w[xmin, xmax, ymin, ymax], c[cwidth, cheig
     return [w[0]+x[0]*xs, w[2]+x[1]*ys];
 }
 
-const gpu = new GPU();
+function initGPU() {
+	try {
+		return new window.GPU.GPU();
+	} catch (e) {
+		return new GPU();
+	}
+}
+const gpu = initGPU();
 gpu.addFunction(coord);
 gpu.addFunction(mod_cc);
 gpu.addFunction(mod2_cc);
